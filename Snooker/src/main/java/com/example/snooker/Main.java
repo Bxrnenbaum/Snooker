@@ -16,36 +16,34 @@ public class Main extends Application {
     @Override
     public void start(Stage primaryStage) {
 
-        //Initializing balls for testing with random velocities
-        balls[0] = new Ball(null, 30, new Vector2(100, 100), new Vector2(500, 200));
-        balls[1] = new Ball(null, 25, new Vector2(300, 100), new Vector2(-400, 600));
-        balls[2] = new Ball(null, 35, new Vector2(500, 100), new Vector2(200, -800));
-        balls[3] = new Ball(null, 20, new Vector2(700, 100), new Vector2(-700, -300));
-        balls[4] = new Ball(null, 40, new Vector2(900, 100), new Vector2(100, 900));
+        balls[0] = new Ball(null, 11.5, new Vector2(296, 354), 1);
+        balls[1] = new Ball(null, 11.5, new Vector2(296, 377), 1);
+        balls[2] = new Ball(null, 11.5, new Vector2(296, 400), 1);
+        balls[3] = new Ball(null, 11.5, new Vector2(296, 423), 1);
+        balls[4] = new Ball(null, 11.5, new Vector2(296, 446), 1);
+        balls[5] = new Ball(null, 11.5, new Vector2(316, 434.5), 1);
+        balls[6] = new Ball(null, 11.5, new Vector2(316, 411.5), 1);
+        balls[7] = new Ball(null, 11.5, new Vector2(316, 388.5), 1);
+        balls[8] = new Ball(null, 11.5, new Vector2(316, 365.5), 1);
+        balls[9] = new Ball(null, 11.5, new Vector2(336, 423), 1);
+        balls[10] = new Ball(null, 11.5, new Vector2(336, 400), 1);
+        balls[11] = new Ball(null, 11.5, new Vector2(336, 377), 1);
+        balls[12] = new Ball(null, 11.5, new Vector2(356, 411.5), 1);
+        balls[13] = new Ball(null, 11.5, new Vector2(356, 388.5), 1);
+        balls[14] = new Ball(null, 11.5, new Vector2(376, 400), 1);
 
-        balls[5] = new Ball(null, 30, new Vector2(100, 300), new Vector2(600, -100));
-        balls[6] = new Ball(null, 25, new Vector2(300, 300), new Vector2(-200, -500));
-        balls[7] = new Ball(null, 35, new Vector2(500, 300), new Vector2(800, 400));
-        balls[8] = new Ball(null, 20, new Vector2(700, 300), new Vector2(-500, 200));
-        balls[9] = new Ball(null, 45, new Vector2(900, 300), new Vector2(300, -600));
+        balls[15] = new Ball(null, 11.5, new Vector2(1280, 467), 2);
+        balls[16] = new Ball(null, 11.5, new Vector2(1280, 333), 3);
+        balls[17] = new Ball(null, 11.5, new Vector2(1280, 400), 4);
+        balls[18] = new Ball(null, 11.5, new Vector2(800, 400), 5);
+        balls[19] = new Ball(null, 11.5, new Vector2(400, 400), 6);
+        balls[20] = new Ball(null, 11.5, new Vector2(146, 400), 7);
 
-        balls[10] = new Ball(null, 30, new Vector2(100, 500), new Vector2(-400, 400));
-        balls[11] = new Ball(null, 25, new Vector2(300, 500), new Vector2(700, -700));
-        balls[12] = new Ball(null, 50, new Vector2(500, 500), new Vector2(-100, 1000));
-        balls[13] = new Ball(null, 20, new Vector2(700, 500), new Vector2(900, 300));
-        balls[14] = new Ball(null, 35, new Vector2(900, 500), new Vector2(-800, -200));
+        balls[21] = new Ball(null, 11.5, new Vector2(300, 200), 0);
 
-        balls[15] = new Ball(null, 30, new Vector2(100, 700), new Vector2(250, 850));
-        balls[16] = new Ball(null, 25, new Vector2(300, 700), new Vector2(-650, -450));
-        balls[17] = new Ball(null, 35, new Vector2(500, 700), new Vector2(400, -350));
-        balls[18] = new Ball(null, 20, new Vector2(700, 700), new Vector2(-300, 750));
-        balls[19] = new Ball(null, 40, new Vector2(900, 700), new Vector2(550, -150));
+        balls[21].velocity = new Vector2(200, -2500); //simulating a strong break
 
-        balls[20] = new Ball(null, 30, new Vector2(100, 900), new Vector2(-900, 100));
-        balls[21] = new Ball(null, 25, new Vector2(300, 900), new Vector2(150, -950));
-        balls[22] = new Ball(null, 45, new Vector2(500, 900), new Vector2(-350, 450));
-        balls[23] = new Ball(null, 20, new Vector2(700, 900), new Vector2(750, 650));
-        balls[24] = new Ball(null, 35, new Vector2(900, 900), new Vector2(-200, -850));
+
 
         for (Ball ball : balls) {
             if (ball == null) continue;
@@ -60,7 +58,7 @@ public class Main extends Application {
             root.getChildren().add(ball.imageView);
         }
 
-        Scene scene = new Scene(root, 800, 800);
+        Scene scene = new Scene(root, 1600, 800);
 
         new AnimationTimer() {
             @Override
@@ -91,6 +89,7 @@ public class Main extends Application {
             if (ball == null) continue;
 
             // move balls. this is completely independent of visual movement (javafx image) as it could cause stutters etc
+
             ball.position = Vector2.sum(ball.position, Vector2.scalar(deltaTime, ball.velocity));
 
             // check for wall collisions and invert velocity accordingly with a bit of energy loss (returnEnergy)
@@ -112,7 +111,7 @@ public class Main extends Application {
             }
 
             // apply friction
-            ball.velocity = Vector2.scalar(.998, ball.velocity);
+            ball.velocity = Vector2.scalar(.997, ball.velocity);
         }
 
         // resolve collisions between balls

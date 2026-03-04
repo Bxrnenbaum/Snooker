@@ -10,26 +10,14 @@ public class Ball {
     public Vector2 velocity;
     public Vector2 position;
     public double radius;
-    public double mass = 100; //mass of a standard snooker ball is usually 142g
+    public double mass = 1; //mass of a standard snooker ball is usually 142g
+    public int type; // 0=White, 1=Red, 2=Yellow, 3=Green, 4=Brown, 5=Blue, 6=Pink, 7=black
 
-    public Ball(Image image, double radius) {
-        this.image = image;
-        imageView = new ImageView(image);
-        imageView.setFitWidth(radius*2);
-        imageView.setFitHeight(radius*2);
-        velocity = new Vector2(0, 0);
-    }
 
-    public Ball(Image image, double radius, Vector2 startingPosition){
-        this.image = image;
-        imageView = new ImageView(image);
-        imageView.setFitWidth(radius*2);
-        imageView.setFitHeight(radius*2);
-        setPosition(startingPosition);
-        velocity = new Vector2(0, 0);
-    }
 
-    public Ball(Image image, double radius, Vector2 startingPosition, Vector2 startingVelocity){
+
+
+    public Ball(Image image, double radius, Vector2 startingPosition, Vector2 startingVelocity, int type){
         this.image = image;
         imageView = new ImageView(image);
         imageView.setFitWidth(radius*2);
@@ -37,6 +25,18 @@ public class Ball {
         setPosition(startingPosition);
         this.velocity = startingVelocity;
         this.radius = radius;
+        this.type = type;
+    }
+
+    public Ball(Image image, double radius, Vector2 startingPosition, int type){
+        this.image = image;
+        imageView = new ImageView(image);
+        imageView.setFitWidth(radius*2);
+        imageView.setFitHeight(radius*2);
+        setPosition(startingPosition);
+        this.radius = radius;
+        this.velocity = new Vector2(0, 0);
+        this.type = type;
     }
 
     public void setImage(Image image) {
