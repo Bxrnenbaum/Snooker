@@ -4,14 +4,20 @@ import javafx.animation.AnimationTimer;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 
 public class Main extends Application {
 
     private long lastUpdate = 0;
-    private Ball[] balls = new Ball[25];
-    int i = 0;
+    private Ball[] balls = new Ball[22];
+
+    private InputHandler inputHandler;
+    private boolean mouseWasPressed;
+
+    Vector2 startingPoint;
+    Vector2 endPoint;
 
     @Override
     public void start(Stage primaryStage) {
@@ -39,15 +45,17 @@ public class Main extends Application {
         balls[19] = new Ball(null, 11.5, new Vector2(400, 400), 6);
         balls[20] = new Ball(null, 11.5, new Vector2(146, 400), 7);
 
-        balls[21] = new Ball(null, 11.5, new Vector2(300, 200), 0);
+        balls[21] = new Ball(new Image("/ball1.png"), 11.5, new Vector2(1350, 360), 0);
 
-        balls[21].velocity = new Vector2(200, -2500); //simulating a strong break
+        //balls[21].velocity = new Vector2(200, -2500); //simulating a strong break
 
 
 
         for (Ball ball : balls) {
             if (ball == null) continue;
-            ball.setImage(new Image("/ball1.png"));
+
+            if(ball.image != null) continue;
+            ball.setImage(new Image("/ball2.png"));
         }
 
         //Setup scene
@@ -59,6 +67,8 @@ public class Main extends Application {
         }
 
         Scene scene = new Scene(root, 1600, 800);
+
+        inputHandler = new InputHandler(scene);
 
         new AnimationTimer() {
             @Override
@@ -80,20 +90,24 @@ public class Main extends Application {
         primaryStage.setTitle("Snooker Game");
         primaryStage.setScene(scene);
         primaryStage.show();
+
+        scene.setOnKeyPressed(event -> {
+            System.out.println("Key pressed: " + event.getCode());
+        });
     }
 
     private void update(double deltaTime, Scene scene) {
-
+        boolean areAllBallsStanding = true;
         //loop through every ball to check wall collisions and apply movement independently
         for (Ball ball : balls) {
             if (ball == null) continue;
 
             // move balls. this is completely independent of visual movement (javafx image) as it could cause stutters etc
 
-            ball.position = Vector2.sum(ball.position, Vector2.scalar(deltaTime, ball.velocity));
+            ball.position = ball.position.sum(ball.velocity.scalar(deltaTime));
 
             // check for wall collisions and invert velocity accordingly with a bit of energy loss (returnEnergy)
-            double returnEnergy = .75;
+            double returnEnergy = .87;
             if (ball.position.x > scene.getWidth() - ball.radius) {
                 ball.velocity.x = -Math.abs(ball.velocity.x) * returnEnergy;
                 ball.position.x = scene.getWidth() - ball.radius;
@@ -111,8 +125,18 @@ public class Main extends Application {
             }
 
             // apply friction
-            ball.velocity = Vector2.scalar(.997, ball.velocity);
+            double friction = .3;
+
+            ball.velocity = ball.velocity.scalar(Math.pow(friction, deltaTime));
+
+
+            // check each balls velocity. if its magnitude is over .5 the player should not be able to shoot the que ball.
+            if(ball.velocity.magnitude() >= .5)
+            {
+                areAllBallsStanding = false;
+            }
         }
+        if(areAllBallsStanding) shootCueBall(); //the movement function is only called if the previous check detected no moving balls
 
         // resolve collisions between balls
         handleCollisions();
@@ -127,6 +151,8 @@ public class Main extends Application {
             double speed = Math.sqrt(ball.velocity.x * ball.velocity.x + ball.velocity.y * ball.velocity.y);
             ball.imageView.setRotate(ball.imageView.getRotate() + (speed * deltaTime));
         }
+
+
     }
 
     public static void main(String[] args) {
@@ -134,40 +160,61 @@ public class Main extends Application {
     }
 
     public void handleCollisions() {
+        // here the collisions are calculated which are checked for every ball combination, hence the for loops.
         for (int i = 0; i < balls.length; i++) {
             if (balls[i] == null) continue;
+
+            // the second loop only starts at i as all balls before that have already been checked and would waste processing power
             for (int j = i + 1; j < balls.length; j++) {
                 if (balls[j] == null) continue;
 
-                double dist = Vector2.distance(balls[i].getPosition(), balls[j].getPosition());
+                double dist = balls[i].getPosition().distance(balls[j].getPosition());
                 double minDist = balls[i].radius + balls[j].radius;
 
                 //checks if collision has happened and applies counter forces accordingly
                 if (dist < minDist) {
-                    Vector2 diff = Vector2.difference(balls[i].getPosition(), balls[j].getPosition());
-                    Vector2 normal = Vector2.normalized(diff);
-                    Vector2 relVel = Vector2.difference(balls[i].velocity, balls[j].velocity);
+                    Vector2 diff = balls[i].getPosition().difference(balls[j].getPosition());
+                    Vector2 normal = diff.normalize();
+                    Vector2 relVel = balls[i].velocity.difference(balls[j].velocity);
 
-                    double speedAlongNormal = Vector2.dot(relVel, normal);
+                    double speedAlongNormal = relVel.dot(normal);
 
                     // make sure collisions are only resolved if balls are approaching each other
                     if (speedAlongNormal < 0) {
                         double e = .95;
                         double jImpulse = (-(1 + e) * speedAlongNormal) / ((1 / balls[i].mass) + (1 / balls[j].mass));
 
-                        Vector2 impulseVec = Vector2.scalar(jImpulse, normal);
+                        Vector2 impulseVec = normal.scalar(jImpulse);
 
-                        balls[i].velocity = Vector2.sum(balls[i].velocity, Vector2.scalar(1 / balls[i].mass, impulseVec));
-                        balls[j].velocity = Vector2.difference(balls[j].velocity, Vector2.scalar(1 / balls[j].mass, impulseVec));
+                        balls[i].velocity = balls[i].velocity.sum(impulseVec.scalar(1 / balls[i].mass));
+                        balls[j].velocity = balls[j].velocity.difference(impulseVec.scalar(1 / balls[j].mass));
 
                         //corrects overlap
                         double overlap = minDist - dist;
-                        Vector2 correction = Vector2.scalar(overlap / 2.0, normal);
-                        balls[i].setPosition(Vector2.sum(balls[i].getPosition(), correction));
-                        balls[j].setPosition(Vector2.difference(balls[j].getPosition(), correction));
+                        Vector2 correction = normal.scalar(overlap / 2.0);
+                        balls[i].setPosition(balls[i].getPosition().sum(correction));
+                        balls[j].setPosition(balls[j].getPosition().difference(correction));
                     }
                 }
             }
         }
+    }
+
+    public void shootCueBall(){
+
+        boolean isCurrentlyPressed = inputHandler.isPressedMouse(MouseButton.PRIMARY);
+
+        //  if the primary button is pressed and wasn't pressed in the frame before, set the startingPoint;
+        if(isCurrentlyPressed && !mouseWasPressed){
+            startingPoint = inputHandler.getMousePosition();
+        }
+
+        // if the primary button isn't pressed but was in the last frame, set the endPoint and apply a force to the cue ball
+        if(!isCurrentlyPressed && mouseWasPressed){
+            endPoint = inputHandler.getMousePosition();
+            balls[21].velocity = endPoint.difference(startingPoint).scalar(5);
+        }
+
+        mouseWasPressed = isCurrentlyPressed;
     }
 }

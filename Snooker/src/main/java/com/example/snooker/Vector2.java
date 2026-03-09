@@ -9,35 +9,39 @@ public class Vector2 {
         this.y = y;
     }
 
-    public static Vector2 sum(Vector2 a, Vector2 b) { //returns the sum of vector a and vector b
-        return new Vector2(a.x + b.x, a.y + b.y);
+    public Vector2 sum(Vector2 b) { //returns the sum of vector this and vector b
+        return new Vector2(this.x + b.x, this.y + b.y);
     }
 
-    public static Vector2 difference(Vector2 a, Vector2 b) { //returns the difference between vector a and vector b
-        return new Vector2(a.x - b.x, a.y - b.y);
+    public Vector2 difference(Vector2 b) { //returns the difference between vector this and vector b
+        return new Vector2(this.x - b.x, this.y - b.y);
     }
 
-    public static Vector2 abs(Vector2 a) { //returns the absolute of the vector
-        return new Vector2(Math.abs(a.x), Math.abs(a.y));
+    public Vector2 abs() { //returns the absolute of the vector
+        return new Vector2(Math.abs(this.x), Math.abs(this.y));
     }
 
-    public static Vector2 normalized(Vector2 a){ //returns the normalized vector
-        double magnitude = Math.sqrt(a.x * a.x + a.y * a.y);
-        if(magnitude == 0)
+    public Vector2 normalize() { //returns the normalized vector
+        double magnitude = Math.sqrt(this.x * this.x + this.y * this.y);
+        if (magnitude == 0)
             return new Vector2(0, 0);
 
-        return new Vector2(a.x / magnitude, a.y / magnitude);
+        return new Vector2(this.x / magnitude, this.y / magnitude);
     }
 
-    public static double dot(Vector2 a, Vector2 b){ //returns the dot product of the vectors
-        return a.x * b.x + a.y * b.y;
+    public double dot(Vector2 this, Vector2 b) { //returns the dot product of the vectors
+        return this.x * b.x + this.y * b.y;
     }
 
-    public static Vector2 scalar(double scalar, Vector2 a){ // returns a vector where each component has been multiplied by the scalar
-        return new Vector2(scalar * a.x, scalar * a.y);
+    public Vector2 scalar(double scalar) { // returns this vector where each component has been multiplied by the scalar
+        return new Vector2(scalar * this.x, scalar * this.y);
     }
 
-    public static double distance(Vector2 a, Vector2 b){ //returns the distance between vector a and vector b
-        return Math.sqrt((b.x - a.x)*(b.x - a.x) + (b.y - a.y)*(b.y - a.y));
+    public double distance(Vector2 b) { //returns the distance between vector this and vector b
+        return Math.sqrt((b.x - this.x) * (b.x - this.x) + (b.y - this.y) * (b.y - this.y));
+    }
+
+    public double magnitude() {
+        return Math.sqrt(this.x * this.x + this.y * this.y);
     }
 }
