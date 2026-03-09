@@ -5,7 +5,7 @@ import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.input.MouseButton;
-import javafx.scene.layout.Pane;
+import javafx.scene.layout.*;
 import javafx.stage.Stage;
 
 public class Main extends Application {
@@ -22,30 +22,30 @@ public class Main extends Application {
     @Override
     public void start(Stage primaryStage) {
 
-        balls[0] = new Ball(null, 11.5, new Vector2(296, 354), 1);
-        balls[1] = new Ball(null, 11.5, new Vector2(296, 377), 1);
-        balls[2] = new Ball(null, 11.5, new Vector2(296, 400), 1);
-        balls[3] = new Ball(null, 11.5, new Vector2(296, 423), 1);
-        balls[4] = new Ball(null, 11.5, new Vector2(296, 446), 1);
-        balls[5] = new Ball(null, 11.5, new Vector2(316, 434.5), 1);
-        balls[6] = new Ball(null, 11.5, new Vector2(316, 411.5), 1);
-        balls[7] = new Ball(null, 11.5, new Vector2(316, 388.5), 1);
-        balls[8] = new Ball(null, 11.5, new Vector2(316, 365.5), 1);
-        balls[9] = new Ball(null, 11.5, new Vector2(336, 423), 1);
-        balls[10] = new Ball(null, 11.5, new Vector2(336, 400), 1);
-        balls[11] = new Ball(null, 11.5, new Vector2(336, 377), 1);
-        balls[12] = new Ball(null, 11.5, new Vector2(356, 411.5), 1);
-        balls[13] = new Ball(null, 11.5, new Vector2(356, 388.5), 1);
-        balls[14] = new Ball(null, 11.5, new Vector2(376, 400), 1);
+        balls[0] = new Ball(new Image("/redBall.png"), 11.5, new Vector2(296, 354), 1);
+        balls[1] = new Ball(new Image("/redBall.png"), 11.5, new Vector2(296, 377), 1);
+        balls[2] = new Ball(new Image("/redBall.png"), 11.5, new Vector2(296, 400), 1);
+        balls[3] = new Ball(new Image("/redBall.png"), 11.5, new Vector2(296, 423), 1);
+        balls[4] = new Ball(new Image("/redBall.png"), 11.5, new Vector2(296, 446), 1);
+        balls[5] = new Ball(new Image("/redBall.png"), 11.5, new Vector2(316, 434.5), 1);
+        balls[6] = new Ball(new Image("/redBall.png"), 11.5, new Vector2(316, 411.5), 1);
+        balls[7] = new Ball(new Image("/redBall.png"), 11.5, new Vector2(316, 388.5), 1);
+        balls[8] = new Ball(new Image("/redBall.png"), 11.5, new Vector2(316, 365.5), 1);
+        balls[9] = new Ball(new Image("/redBall.png"), 11.5, new Vector2(336, 423), 1);
+        balls[10] = new Ball(new Image("/redBall.png"), 11.5, new Vector2(336, 400), 1);
+        balls[11] = new Ball(new Image("/redBall.png"), 11.5, new Vector2(336, 377), 1);
+        balls[12] = new Ball(new Image("/redBall.png"), 11.5, new Vector2(356, 411.5), 1);
+        balls[13] = new Ball(new Image("/redBall.png"), 11.5, new Vector2(356, 388.5), 1);
+        balls[14] = new Ball(new Image("/redBall.png"), 11.5, new Vector2(376, 400), 1);
 
-        balls[15] = new Ball(null, 11.5, new Vector2(1280, 467), 2);
-        balls[16] = new Ball(null, 11.5, new Vector2(1280, 333), 3);
-        balls[17] = new Ball(null, 11.5, new Vector2(1280, 400), 4);
-        balls[18] = new Ball(null, 11.5, new Vector2(800, 400), 5);
-        balls[19] = new Ball(null, 11.5, new Vector2(400, 400), 6);
-        balls[20] = new Ball(null, 11.5, new Vector2(146, 400), 7);
+        balls[15] = new Ball(new Image("/greenBall.png"), 11.5, new Vector2(1280, 467), 2);
+        balls[16] = new Ball(new Image("/yellowBall.png"), 11.5, new Vector2(1280, 333), 3);
+        balls[17] = new Ball(new Image("/brownBall.png"), 11.5, new Vector2(1280, 400), 4);
+        balls[18] = new Ball(new Image("/blueBall.png"), 11.5, new Vector2(800, 400), 5);
+        balls[19] = new Ball(new Image("/pinkBall.png"), 11.5, new Vector2(400, 400), 6);
+        balls[20] = new Ball(new Image("/blackBall.png"), 11.5, new Vector2(146, 400), 7);
 
-        balls[21] = new Ball(new Image("/ball1.png"), 11.5, new Vector2(1350, 360), 0);
+        balls[21] = new Ball(new Image("/cueBall.png"), 11.5, new Vector2(1350, 360), 0);
 
         //balls[21].velocity = new Vector2(200, -2500); //simulating a strong break
 
@@ -60,6 +60,15 @@ public class Main extends Application {
 
         //Setup scene
         Pane root = new Pane();
+
+        Image backgroundImage = new Image("/table.png");
+        BackgroundImage background = new BackgroundImage(backgroundImage,
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundPosition.DEFAULT,
+                new BackgroundSize(1.0, 1.0, true, true, false, false));
+
+        root.setBackground(new Background(background));
 
         for (Ball ball : balls) {
             if (ball == null) continue;
@@ -89,6 +98,7 @@ public class Main extends Application {
 
         primaryStage.setTitle("Snooker Game");
         primaryStage.setScene(scene);
+        primaryStage.setResizable(false);
         primaryStage.show();
 
         scene.setOnKeyPressed(event -> {
@@ -125,13 +135,13 @@ public class Main extends Application {
             }
 
             // apply friction
-            double friction = .3;
+            double friction = .45;
 
             ball.velocity = ball.velocity.scalar(Math.pow(friction, deltaTime));
 
 
             // check each balls velocity. if its magnitude is over .5 the player should not be able to shoot the que ball.
-            if(ball.velocity.magnitude() >= .5)
+            if(ball.velocity.magnitude() >= 1)
             {
                 areAllBallsStanding = false;
             }
@@ -212,7 +222,7 @@ public class Main extends Application {
         // if the primary button isn't pressed but was in the last frame, set the endPoint and apply a force to the cue ball
         if(!isCurrentlyPressed && mouseWasPressed){
             endPoint = inputHandler.getMousePosition();
-            balls[21].velocity = endPoint.difference(startingPoint).scalar(5);
+            balls[21].velocity = endPoint.difference(startingPoint).scalar(-7.5);
         }
 
         mouseWasPressed = isCurrentlyPressed;
