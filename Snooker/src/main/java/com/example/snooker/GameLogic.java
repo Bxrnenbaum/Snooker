@@ -1,16 +1,15 @@
 package com.example.snooker;
 
-import javafx.animation.AnimationTimer;
-import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.input.MouseButton;
-import javafx.scene.layout.*;
-import javafx.stage.Stage;
 
-public class Main extends Application {
+public class GameLogic
+{
 
-    private long lastUpdate = 0;
+    private final int BASE_WIDTH = 3200;
+    private final int BASE_HEIGHT = 1600;
+
     private Ball[] balls = new Ball[22];
 
     private InputHandler inputHandler;
@@ -19,8 +18,7 @@ public class Main extends Application {
     Vector2 startingPoint;
     Vector2 endPoint;
 
-    @Override
-    public void start(Stage primaryStage) {
+    public void onStart(Scene scene){ //gets called once when game is started
 
         balls[0] = new Ball(new Image("/redBall.png"), 11.5, new Vector2(296, 354), 1);
         balls[1] = new Ball(new Image("/redBall.png"), 11.5, new Vector2(296, 377), 1);
@@ -47,9 +45,6 @@ public class Main extends Application {
 
         balls[21] = new Ball(new Image("/cueBall.png"), 11.5, new Vector2(1350, 360), 0);
 
-        //balls[21].velocity = new Vector2(200, -2500); //simulating a strong break
-
-
 
         for (Ball ball : balls) {
             if (ball == null) continue;
@@ -58,55 +53,10 @@ public class Main extends Application {
             ball.setImage(new Image("/ball2.png"));
         }
 
-        //Setup scene
-        Pane root = new Pane();
-
-        Image backgroundImage = new Image("/table.png");
-        BackgroundImage background = new BackgroundImage(backgroundImage,
-                BackgroundRepeat.NO_REPEAT,
-                BackgroundRepeat.NO_REPEAT,
-                BackgroundPosition.DEFAULT,
-                new BackgroundSize(1.0, 1.0, true, true, false, false));
-
-        root.setBackground(new Background(background));
-
-        for (Ball ball : balls) {
-            if (ball == null) continue;
-            root.getChildren().add(ball.imageView);
-        }
-
-        Scene scene = new Scene(root, 1600, 800);
-
         inputHandler = new InputHandler(scene);
-
-        new AnimationTimer() {
-            @Override
-            public void handle(long now) {
-                if (lastUpdate == 0) {
-                    lastUpdate = now;
-                    return;
-                }
-
-                // Calculate delta time (seconds elapsed since last frame)
-                double deltaTime = (now - lastUpdate) / 1_000_000_000.0;
-                lastUpdate = now;
-
-                //calls update function, called once per frame
-                update(deltaTime, scene);
-            }
-        }.start();
-
-        primaryStage.setTitle("Snooker Game");
-        primaryStage.setScene(scene);
-        primaryStage.setResizable(false);
-        primaryStage.show();
-
-        scene.setOnKeyPressed(event -> {
-            System.out.println("Key pressed: " + event.getCode());
-        });
     }
 
-    private void update(double deltaTime, Scene scene) {
+    public void update(double deltaTime, Scene scene) {
         boolean areAllBallsStanding = true;
         //loop through every ball to check wall collisions and apply movement independently
         for (Ball ball : balls) {
@@ -163,10 +113,6 @@ public class Main extends Application {
         }
 
 
-    }
-
-    public static void main(String[] args) {
-        launch(args);
     }
 
     public void handleCollisions() {
@@ -226,5 +172,10 @@ public class Main extends Application {
         }
 
         mouseWasPressed = isCurrentlyPressed;
+    }
+
+
+    public Ball[] getBalls(){
+        return balls;
     }
 }

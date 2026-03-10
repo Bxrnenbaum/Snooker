@@ -14,20 +14,6 @@ public class Ball {
     public int type; // 0=White, 1=Red, 2=Yellow, 3=Green, 4=Brown, 5=Blue, 6=Pink, 7=black
 
 
-
-
-
-    public Ball(Image image, double radius, Vector2 startingPosition, Vector2 startingVelocity, int type){
-        this.image = image;
-        imageView = new ImageView(image);
-        imageView.setFitWidth(radius*2);
-        imageView.setFitHeight(radius*2);
-        setPosition(startingPosition);
-        this.velocity = startingVelocity;
-        this.radius = radius;
-        this.type = type;
-    }
-
     public Ball(Image image, double radius, Vector2 startingPosition, int type){
         this.image = image;
         imageView = new ImageView(image);
