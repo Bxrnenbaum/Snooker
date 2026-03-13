@@ -5,6 +5,7 @@ import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.layout.*;
+import javafx.scene.shape.Line;
 import javafx.stage.Stage;
 
 public class UIManager extends Application
@@ -36,7 +37,7 @@ public class UIManager extends Application
 
         Scene scene = new Scene(root, 1600, 800);
 
-        gameLogic.onStart(scene);
+        gameLogic.onStart(scene,root);
 
         for (Ball ball : gameLogic.getBalls()) {
             if (ball == null) continue;
@@ -56,7 +57,7 @@ public class UIManager extends Application
                 lastUpdate = now;
 
                 //calls update function, called once per frame
-                gameLogic.update(deltaTime, scene);
+                gameLogic.update(deltaTime, scene, root);
             }
         }.start();
 
