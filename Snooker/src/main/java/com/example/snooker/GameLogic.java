@@ -3,6 +3,8 @@ package com.example.snooker;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.input.MouseButton;
+import javafx.scene.layout.Pane;
+import javafx.scene.shape.Line;
 
 public class GameLogic
 {
@@ -20,7 +22,9 @@ public class GameLogic
     Vector2 startingPoint;
     Vector2 endPoint;
 
-    public void onStart(Scene scene){ //gets called once when game is started
+    private Line aimLine;
+
+    public void onStart(Scene scene, Pane pane){ //gets called once when game is started
 
         balls[0] = new Ball(new Image("/redBall.png"), 11.5, new Vector2(296, 354), 1);
         balls[1] = new Ball(new Image("/redBall.png"), 11.5, new Vector2(296, 377), 1);
@@ -47,7 +51,6 @@ public class GameLogic
 
         balls[21] = new Ball(new Image("/cueBall.png"), 11.5, new Vector2(1350, 360), 0);
 
-
         for (Ball ball : balls) {
             if (ball == null) continue;
 
@@ -56,16 +59,20 @@ public class GameLogic
         }
 
         inputHandler = new InputHandler(scene);
+
+        aimLine = new Line();
+        aimLine.setStrokeWidth(3);
+
+        pane.getChildren().add(aimLine);
     }
 
-    public void update(double deltaTime, Scene scene) {
+    public void update(double deltaTime, Scene scene, Pane pane) {
         boolean areAllBallsStanding = true;
-        //loop through every ball to check wall collisions and apply movement independently
+        // loop through every ball to check wall collisions and apply movement independently
         for (Ball ball : balls) {
             if (ball == null) continue;
 
             // move balls. this is completely independent of visual movement (javafx image) as it could cause stutters etc
-
             ball.position = ball.position.sum(ball.velocity.scalar(deltaTime));
 
             // check for wall collisions and invert velocity accordingly with a bit of energy loss (returnEnergy)
@@ -73,9 +80,7 @@ public class GameLogic
 
             // apply friction
             double friction = .45;
-
             ball.velocity = ball.velocity.scalar(Math.pow(friction, deltaTime));
-
 
             // check each balls velocity. if its magnitude is over .5 the player should not be able to shoot the que ball.
             if(ball.velocity.magnitude() >= 1)
@@ -83,7 +88,8 @@ public class GameLogic
                 areAllBallsStanding = false;
             }
         }
-        if(areAllBallsStanding) shootCueBall(); //the movement function is only called if the previous check detected no moving balls
+
+        if(areAllBallsStanding) shootCueBall(); // the movement function is only called if the previous check detected no moving balls
 
         // resolve collisions between balls
         handleCollisions();
@@ -91,6 +97,7 @@ public class GameLogic
         // sync graphics (javafx images) to the movement of the balls
         for (Ball ball : balls) {
             if (ball == null) continue;
+
             ball.imageView.setX(ball.position.x - ball.radius);
             ball.imageView.setY(ball.position.y - ball.radius);
 
@@ -99,7 +106,30 @@ public class GameLogic
             ball.imageView.setRotate(ball.imageView.getRotate() + (speed * deltaTime));
         }
 
+        updateAimLine(areAllBallsStanding);
+    }
 
+    private void updateAimLine(boolean visible){
+
+        aimLine.setVisible(visible);
+
+        if(!visible) return;
+
+        Vector2 mouse = inputHandler.getMousePosition();
+        Vector2 cueBallPos = balls[21].position;
+
+        Vector2 drag = mouse.difference(cueBallPos);
+        Vector2 aim = drag.scalar(-1);
+
+        double power = drag.magnitude() * 2;
+
+        Vector2 aimEnd = cueBallPos.sum(aim.normalize().scalar(power));
+
+        aimLine.setStartX(cueBallPos.x);
+        aimLine.setStartY(cueBallPos.y);
+
+        aimLine.setEndX(aimEnd.x);
+        aimLine.setEndY(aimEnd.y);
     }
 
     public void handleCollisions() {
@@ -114,7 +144,7 @@ public class GameLogic
                 double dist = balls[i].getPosition().distance(balls[j].getPosition());
                 double minDist = balls[i].radius + balls[j].radius;
 
-                //checks if collision has happened and applies counter forces accordingly
+                // checks if collision has happened and applies counter forces accordingly
                 if (dist < minDist) {
                     Vector2 diff = balls[i].getPosition().difference(balls[j].getPosition());
                     Vector2 normal = diff.normalize();
@@ -132,7 +162,7 @@ public class GameLogic
                         balls[i].velocity = balls[i].velocity.sum(impulseVec.scalar(1 / balls[i].mass));
                         balls[j].velocity = balls[j].velocity.difference(impulseVec.scalar(1 / balls[j].mass));
 
-                        //corrects overlap
+                        // corrects overlap
                         double overlap = minDist - dist;
                         Vector2 correction = normal.scalar(overlap / 2.0);
                         balls[i].setPosition(balls[i].getPosition().sum(correction));
@@ -147,7 +177,7 @@ public class GameLogic
 
         boolean isCurrentlyPressed = inputHandler.isPressedMouse(MouseButton.PRIMARY);
 
-        //  if the primary button is pressed and wasn't pressed in the frame before, set the startingPoint;
+        // if the primary button is pressed and wasn't pressed in the frame before, set the startingPoint
         if(isCurrentlyPressed && !mouseWasPressed){
             startingPoint = inputHandler.getMousePosition();
         }
@@ -160,7 +190,6 @@ public class GameLogic
 
         mouseWasPressed = isCurrentlyPressed;
     }
-
 
     public Ball[] getBalls(){
         return balls;
