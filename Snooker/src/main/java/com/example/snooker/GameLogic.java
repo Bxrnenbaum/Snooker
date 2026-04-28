@@ -10,6 +10,8 @@ public class GameLogic
     private final int BASE_WIDTH = 3200;
     private final int BASE_HEIGHT = 1600;
 
+    private final double SCALING_FACTOR = .5;
+
     private Ball[] balls = new Ball[22];
 
     private InputHandler inputHandler;
@@ -67,22 +69,7 @@ public class GameLogic
             ball.position = ball.position.sum(ball.velocity.scalar(deltaTime));
 
             // check for wall collisions and invert velocity accordingly with a bit of energy loss (returnEnergy)
-            double returnEnergy = .87;
-            if (ball.position.x > scene.getWidth() - ball.radius) {
-                ball.velocity.x = -Math.abs(ball.velocity.x) * returnEnergy;
-                ball.position.x = scene.getWidth() - ball.radius;
-            } else if (ball.position.x < ball.radius) {
-                ball.velocity.x = Math.abs(ball.velocity.x) * returnEnergy;
-                ball.position.x = ball.radius;
-            }
-
-            if (ball.position.y > scene.getHeight() - ball.radius) {
-                ball.velocity.y = -Math.abs(ball.velocity.y) * returnEnergy;
-                ball.position.y = scene.getHeight() - ball.radius;
-            } else if (ball.position.y < ball.radius) {
-                ball.velocity.y = Math.abs(ball.velocity.y) * returnEnergy;
-                ball.position.y = ball.radius;
-            }
+            calculateWallCollisions(ball, scene);
 
             // apply friction
             double friction = .45;
@@ -177,5 +164,24 @@ public class GameLogic
 
     public Ball[] getBalls(){
         return balls;
+    }
+
+    public void calculateWallCollisions(Ball ball, Scene scene){
+        double returnEnergy = .87;
+        if (ball.position.x > scene.getWidth() - ball.radius) {
+            ball.velocity.x = -Math.abs(ball.velocity.x) * returnEnergy;
+            ball.position.x = scene.getWidth() - ball.radius;
+        } else if (ball.position.x < ball.radius) {
+            ball.velocity.x = Math.abs(ball.velocity.x) * returnEnergy;
+            ball.position.x = ball.radius;
+        }
+
+        if (ball.position.y > scene.getHeight() - ball.radius) {
+            ball.velocity.y = -Math.abs(ball.velocity.y) * returnEnergy;
+            ball.position.y = scene.getHeight() - ball.radius;
+        } else if (ball.position.y < ball.radius) {
+            ball.velocity.y = Math.abs(ball.velocity.y) * returnEnergy;
+            ball.position.y = ball.radius;
+        }
     }
 }

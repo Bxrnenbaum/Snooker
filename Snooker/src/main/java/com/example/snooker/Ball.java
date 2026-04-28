@@ -10,7 +10,7 @@ public class Ball {
     public Vector2 velocity;
     public Vector2 position;
     public double radius;
-    public double mass = 1; //mass of a standard snooker ball is usually 142g
+    public double mass = 1;
     public int type; // 0=White, 1=Red, 2=Yellow, 3=Green, 4=Brown, 5=Blue, 6=Pink, 7=black
 
 
