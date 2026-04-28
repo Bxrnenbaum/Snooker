@@ -29,7 +29,7 @@ public class Vector2 {
         return new Vector2(this.x / magnitude, this.y / magnitude);
     }
 
-    public double dot(Vector2 this, Vector2 b) { //returns the dot product of the vectors
+    public double dot(Vector2 b) { //returns the dot product of the vectors
         return this.x * b.x + this.y * b.y;
     }
 
