@@ -109,16 +109,27 @@ public class GameLogic
         updateAimLine(areAllBallsStanding);
     }
 
-    private void updateAimLine(boolean visible){
+    private void updateAimLine(boolean visible) {
 
         aimLine.setVisible(visible);
 
-        if(!visible) return;
+        if (!visible) return;
 
-        Vector2 mouse = inputHandler.getMousePosition();
+        boolean isCurrentlyPressed = inputHandler.isPressedMouse(MouseButton.PRIMARY);
+
+        // Linie nur anzeigen, während man wirklich zieht
+        if (!isCurrentlyPressed || startingPoint == null) {
+            aimLine.setVisible(false);
+            return;
+        }
+
+        Vector2 currentMouse = inputHandler.getMousePosition();
         Vector2 cueBallPos = balls[21].position;
 
-        Vector2 drag = mouse.difference(cueBallPos);
+
+        Vector2 drag = currentMouse.difference(startingPoint);
+
+
         Vector2 aim = drag.scalar(-1);
 
         double power = drag.magnitude() * 2;
