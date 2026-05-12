@@ -6,22 +6,29 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.image.Image;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
+import javafx.scene.control.Label;
+import javafx.scene.control.Slider;
 
 public class UIManager extends Application {
 
-    private static final int WINDOW_WIDTH = 1600;
-    private static final int WINDOW_HEIGHT = 800;
+    private static final int WIDTH = 1600;
+    private static final int HEIGHT = 800;
 
     private long lastUpdate = 0;
 
     private Stage primaryStage;
     private AnimationTimer gameLoop;
-    private GameLogic gameLogic;
+    private GameLogic gameLogic = new GameLogic();
 
-    private static final double FIXED_STEP = 1.0 / 60;
-    private double accumulator = 0;
+    private StackPane gameRoot;
+    private Pane gamePane;
+    private VBox pauseMenu;
+
+    private boolean paused = false;
+    private final ConfigReader config = new ConfigReader("config.properties");
 
     public static void main(String[] args) {
         launch(args);
@@ -31,98 +38,115 @@ public class UIManager extends Application {
     public void start(Stage primaryStage) {
         this.primaryStage = primaryStage;
 
-        this.primaryStage.setTitle("Snooker Game");
-        this.primaryStage.setResizable(false);
-        this.primaryStage.setScene(createStartScene());
-        this.primaryStage.show();
+        primaryStage.setTitle("Snooker Game");
+        primaryStage.setResizable(false);
+        primaryStage.setScene(createStartScene());
+        primaryStage.show();
     }
 
     private Scene createStartScene() {
         VBox root = new VBox(20);
         root.setAlignment(Pos.CENTER);
 
-        Button startButton = new Button("Start");
+        Button startButton = new Button("Start Game");
         Button optionsButton = new Button("Options");
         Button quitButton = new Button("Quit");
 
-        startButton.setOnAction(e -> switchToGameScene());
-        optionsButton.setOnAction(e -> switchToOptionsScene());
+        startButton.setOnAction(e -> startGame());
+        optionsButton.setOnAction(e -> primaryStage.setScene(createOptionsScene()));
         quitButton.setOnAction(e -> primaryStage.close());
 
-        root.getChildren().addAll(
-                startButton,
-                optionsButton,
-                quitButton
-        );
+        root.getChildren().addAll(startButton, optionsButton, quitButton);
 
-        return new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT);
+        return new Scene(root, WIDTH, HEIGHT);
     }
 
-    private void switchToOptionsScene() {
+    private Scene createOptionsScene() {
         VBox root = new VBox(20);
         root.setAlignment(Pos.CENTER);
+        root.setFillWidth(false);
+
+        int savedSubsteps = config.getInt("substeps", 10);
+
+        Label substepsLabel = new Label("Substeps: " + savedSubsteps);
+
+        Slider substepsSlider = new Slider(1, 10, savedSubsteps);
+        substepsSlider.setShowTickLabels(true);
+        substepsSlider.setShowTickMarks(true);
+        substepsSlider.setMajorTickUnit(1);
+        substepsSlider.setMinorTickCount(0);
+        substepsSlider.setBlockIncrement(1);
+        substepsSlider.setSnapToTicks(true);
+        substepsSlider.setPrefWidth(150);
+
+        substepsSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
+            int substeps = (int) Math.round(newValue.doubleValue());
+
+            substepsSlider.setValue(substeps);
+            substepsLabel.setText("Substeps: " + substeps);
+
+            config.setInt("substeps", substeps);
+            config.save();
+
+            System.out.println("Saved substeps: " + substeps);
+        });
 
         Button backButton = new Button("Back");
-
-        // Later you can add volume sliders, difficulty buttons, controls, etc. here.
-
         backButton.setOnAction(e -> primaryStage.setScene(createStartScene()));
 
-        root.getChildren().add(backButton);
+        root.getChildren().addAll(
+                substepsLabel,
+                substepsSlider,
+                backButton
+        );
 
-        Scene optionsScene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT);
-        primaryStage.setScene(optionsScene);
+        return new Scene(root, WIDTH, HEIGHT);
     }
 
-    private void switchToGameScene() {
-        Pane root = new Pane();
+    private void startGame() {
+        stopGameLoop();
+
+        paused = false;
+        lastUpdate = 0;
+        gameLogic = new GameLogic();
+
+        gameRoot = new StackPane();
+        gamePane = new Pane();
 
         Image backgroundImage = new Image("/table.png");
-
         BackgroundImage background = new BackgroundImage(
                 backgroundImage,
                 BackgroundRepeat.NO_REPEAT,
                 BackgroundRepeat.NO_REPEAT,
                 BackgroundPosition.DEFAULT,
-                new BackgroundSize(
-                        1.0,
-                        1.0,
-                        true,
-                        true,
-                        false,
-                        false
-                )
+                new BackgroundSize(1.0, 1.0, true, true, false, false)
         );
 
-        root.setBackground(new Background(background));
+        gamePane.setBackground(new Background(background));
+        gameRoot.getChildren().add(gamePane);
 
-        Scene gameScene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT);
+        Scene scene = new Scene(gameRoot, WIDTH, HEIGHT);
 
-        gameLogic = new GameLogic();
-        gameLogic.onStart(gameScene, root);
+        gameLogic.onStart(scene, gamePane);
 
-        addBallsToRoot(root);
-        startGameLoop(gameScene, root);
-
-        primaryStage.setScene(gameScene);
-    }
-
-    private void addBallsToRoot(Pane root) {
         for (Ball ball : gameLogic.getBalls()) {
-            if (ball == null) {
-                continue;
-            }
-
-            root.getChildren().add(ball.imageView);
+            if (ball == null) continue;
+            gamePane.getChildren().add(ball.imageView);
         }
-    }
 
-    private void startGameLoop(Scene gameScene, Pane root) {
-        lastUpdate = 0;
+        createPauseMenu();
+
+        scene.setOnKeyPressed(e -> {
+            if (e.getCode() == KeyCode.ESCAPE) {
+                togglePauseMenu();
+            }
+        });
 
         gameLoop = new AnimationTimer() {
             @Override
             public void handle(long now) {
+                if (paused) return;
+
                 if (lastUpdate == 0) {
                     lastUpdate = now;
                     return;
@@ -131,10 +155,51 @@ public class UIManager extends Application {
                 double deltaTime = (now - lastUpdate) / 1_000_000_000.0;
                 lastUpdate = now;
 
-                gameLogic.update(deltaTime, gameScene, root);
+                gameLogic.update(deltaTime, scene, gamePane);
             }
         };
 
         gameLoop.start();
+
+        primaryStage.setScene(scene);
+    }
+
+    private void createPauseMenu() {
+        pauseMenu = new VBox(20);
+        pauseMenu.setAlignment(Pos.CENTER);
+        pauseMenu.setVisible(false);
+
+        pauseMenu.setStyle(
+                "-fx-background-color: rgba(0, 0, 0, 0.7);" +
+                        "-fx-padding: 50;"
+        );
+
+        Button resumeButton = new Button("Resume");
+        Button mainMenuButton = new Button("Main Menu");
+
+        resumeButton.setOnAction(e -> togglePauseMenu());
+        mainMenuButton.setOnAction(e -> goToMainMenu());
+
+        pauseMenu.getChildren().addAll(resumeButton, mainMenuButton);
+        gameRoot.getChildren().add(pauseMenu);
+    }
+
+    private void togglePauseMenu() {
+        paused = !paused;
+        pauseMenu.setVisible(paused);
+        lastUpdate = 0;
+    }
+
+    private void goToMainMenu() {
+        stopGameLoop();
+        paused = false;
+        primaryStage.setScene(createStartScene());
+    }
+
+    private void stopGameLoop() {
+        if (gameLoop != null) {
+            gameLoop.stop();
+            gameLoop = null;
+        }
     }
 }
