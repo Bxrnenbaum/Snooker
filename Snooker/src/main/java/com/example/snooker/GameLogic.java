@@ -10,7 +10,7 @@ import javafx.scene.shape.Line;
 public class GameLogic {
 
     private int subSteps = 8;
-    private final ConfigReader config = new ConfigReader("config.properties");
+    private final ConfigReader config = new ConfigReader("src/main/resources/config.properties");
 
     private final int BASE_WIDTH = 3200;
     private final int BASE_HEIGHT = 1600;
