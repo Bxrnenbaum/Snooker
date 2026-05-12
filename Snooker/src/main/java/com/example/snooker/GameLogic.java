@@ -104,14 +104,6 @@ public class GameLogic {
         config.load();
         subSteps = config.getInt("substeps", 8);
 
-        if (subSteps < 1) {
-            subSteps = 1;
-        }
-
-        if (subSteps > 10) {
-            subSteps = 10;
-        }
-
         double friction = .45;
         double subDelta = deltaTime / subSteps;
         double frictionFactorPerSubStep = Math.pow(friction, subDelta);

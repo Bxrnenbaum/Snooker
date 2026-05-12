@@ -48,9 +48,5 @@ public class ConfigReader {
         properties.setProperty(key, String.valueOf(value));
     }
 
-    public void printAllValues() {
-        for (String key : properties.stringPropertyNames()) {
-            System.out.println(key + " = " + properties.getProperty(key));
-        }
-    }
+
 }
