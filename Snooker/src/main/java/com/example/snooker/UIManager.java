@@ -20,6 +20,9 @@ public class UIManager extends Application {
     private AnimationTimer gameLoop;
     private GameLogic gameLogic;
 
+    private static final double FIXED_STEP = 1.0 / 60;
+    private double accumulator = 0;
+
     public static void main(String[] args) {
         launch(args);
     }
