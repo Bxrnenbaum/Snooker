@@ -28,7 +28,7 @@ public class UIManager extends Application {
     private VBox pauseMenu;
 
     private boolean paused = false;
-    private final ConfigReader config = new ConfigReader("config.properties");
+    private final ConfigReader config = new ConfigReader("src/main/resources/config.properties");
 
     public static void main(String[] args) {
         launch(args);
