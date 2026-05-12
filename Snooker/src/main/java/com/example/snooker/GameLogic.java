@@ -4,10 +4,10 @@ import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.Pane;
+import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
 
-public class GameLogic
-{
+public class GameLogic {
 
     private final int BASE_WIDTH = 3200;
     private final int BASE_HEIGHT = 1600;
@@ -15,6 +15,8 @@ public class GameLogic
     private final double SCALING_FACTOR = .5;
 
     private Ball[] balls = new Ball[22];
+
+    private Cushion[] cushions;
 
     private InputHandler inputHandler;
     private boolean mouseWasPressed;
@@ -24,7 +26,9 @@ public class GameLogic
 
     private Line aimLine;
 
-    public void onStart(Scene scene, Pane pane){ //gets called once when game is started
+    private boolean showCushionLines = true;
+
+    public void onStart(Scene scene, Pane pane) { //gets called once when game is started
 
         balls[0] = new Ball(new Image("/redBall.png"), 11.5, new Vector2(296, 354), 1);
         balls[1] = new Ball(new Image("/redBall.png"), 11.5, new Vector2(296, 377), 1);
@@ -47,14 +51,18 @@ public class GameLogic
         balls[17] = new Ball(new Image("/brownBall.png"), 11.5, new Vector2(1280, 400), 4);
         balls[18] = new Ball(new Image("/blueBall.png"), 11.5, new Vector2(800, 400), 5);
         balls[19] = new Ball(new Image("/pinkBall.png"), 11.5, new Vector2(400, 400), 6);
-        balls[20] = new Ball(new Image("/blackBall.png"), 11.5, new Vector2(146, 400), 7);
+
+        if(Math.random() <= .01)
+            balls[20] = new Ball(new Image("/ball2.png"), 11.5, new Vector2(146, 400), 7);
+        else
+            balls[20] = new Ball(new Image("/blackBall.png"), 11.5, new Vector2(146, 400), 7);
 
         balls[21] = new Ball(new Image("/cueBall.png"), 11.5, new Vector2(1350, 360), 0);
 
         for (Ball ball : balls) {
             if (ball == null) continue;
 
-            if(ball.image != null) continue;
+            if (ball.image != null) continue;
             ball.setImage(new Image("/ball2.png"));
         }
 
@@ -64,9 +72,25 @@ public class GameLogic
         aimLine.setStrokeWidth(3);
 
         pane.getChildren().add(aimLine);
+
+        cushions = instantiateCushions(BASE_WIDTH, BASE_HEIGHT);
+
+        if (showCushionLines) {
+            for (Cushion cushion : cushions) {
+                for (LineSegment seg : cushion.segments) {
+                    Line line = new Line(seg.a.x, seg.a.y, seg.b.x, seg.b.y);
+                    line.setStroke(Color.WHITE);
+                    line.setStrokeWidth(1.5);
+                    pane.getChildren().add(line);
+                }
+            }
+        }
     }
 
     public void update(double deltaTime, Scene scene, Pane pane) {
+        double friction = .45;
+        double friction_factor = Math.pow(friction, deltaTime);
+
         boolean areAllBallsStanding = true;
         // loop through every ball to check wall collisions and apply movement independently
         for (Ball ball : balls) {
@@ -76,20 +100,19 @@ public class GameLogic
             ball.position = ball.position.sum(ball.velocity.scalar(deltaTime));
 
             // check for wall collisions and invert velocity accordingly with a bit of energy loss (returnEnergy)
-            calculateWallCollisions(ball, scene);
+            calculateWallCollisions(ball, scene, cushions);
 
             // apply friction
-            double friction = .45;
-            ball.velocity = ball.velocity.scalar(Math.pow(friction, deltaTime));
+            ball.velocity = ball.velocity.scalar(friction_factor);
 
             // check each balls velocity. if its magnitude is over .5 the player should not be able to shoot the que ball.
-            if(ball.velocity.magnitude() >= 1)
-            {
+            if (ball.velocity.magnitude() >= 1) {
                 areAllBallsStanding = false;
             }
         }
 
-        if(areAllBallsStanding) shootCueBall(); // the movement function is only called if the previous check detected no moving balls
+        if (areAllBallsStanding)
+            shootCueBall(); // the movement function is only called if the previous check detected no moving balls
 
         // resolve collisions between balls
         handleCollisions();
@@ -103,7 +126,7 @@ public class GameLogic
 
             // rotate ball because looks cool
             double speed = Math.sqrt(ball.velocity.x * ball.velocity.x + ball.velocity.y * ball.velocity.y);
-            ball.imageView.setRotate(ball.imageView.getRotate() + (speed * deltaTime));
+            ball.imageView.setRotate(ball.imageView.getRotate() + (speed * deltaTime) % 360);
         }
 
         updateAimLine(areAllBallsStanding);
@@ -117,7 +140,6 @@ public class GameLogic
 
         boolean isCurrentlyPressed = inputHandler.isPressedMouse(MouseButton.PRIMARY);
 
-        // Linie nur anzeigen, während man wirklich zieht
         if (!isCurrentlyPressed || startingPoint == null) {
             aimLine.setVisible(false);
             return;
@@ -144,57 +166,58 @@ public class GameLogic
     }
 
     public void handleCollisions() {
-        // here the collisions are calculated which are checked for every ball combination, hence the for loops.
+        final double e = 0.95;
+        final double minDist = 23.0;
+        final double minDistSq = minDist * minDist;
+
         for (int i = 0; i < balls.length; i++) {
             if (balls[i] == null) continue;
-
-            // the second loop only starts at i as all balls before that have already been checked and would waste processing power
             for (int j = i + 1; j < balls.length; j++) {
                 if (balls[j] == null) continue;
 
-                double dist = balls[i].getPosition().distance(balls[j].getPosition());
-                double minDist = balls[i].radius + balls[j].radius;
+                double dx = balls[i].position.x - balls[j].position.x;
+                double dy = balls[i].position.y - balls[j].position.y;
+                double distSq = dx * dx + dy * dy;
 
-                // checks if collision has happened and applies counter forces accordingly
-                if (dist < minDist) {
-                    Vector2 diff = balls[i].getPosition().difference(balls[j].getPosition());
-                    Vector2 normal = diff.normalize();
-                    Vector2 relVel = balls[i].velocity.difference(balls[j].velocity);
+                if (distSq >= minDistSq) continue;
 
-                    double speedAlongNormal = relVel.dot(normal);
+                double dist = Math.sqrt(distSq);
+                double nx = dx / dist;
+                double ny = dy / dist;
 
-                    // make sure collisions are only resolved if balls are approaching each other
-                    if (speedAlongNormal < 0) {
-                        double e = .95;
-                        double jImpulse = (-(1 + e) * speedAlongNormal) / ((1 / balls[i].mass) + (1 / balls[j].mass));
+                double dvx = balls[i].velocity.x - balls[j].velocity.x;
+                double dvy = balls[i].velocity.y - balls[j].velocity.y;
+                double speedAlongNormal = dvx * nx + dvy * ny;
 
-                        Vector2 impulseVec = normal.scalar(jImpulse);
+                if (speedAlongNormal >= 0) continue;
 
-                        balls[i].velocity = balls[i].velocity.sum(impulseVec.scalar(1 / balls[i].mass));
-                        balls[j].velocity = balls[j].velocity.difference(impulseVec.scalar(1 / balls[j].mass));
+                double jImpulse = -(1 + e) * speedAlongNormal / 2.0;
 
-                        // corrects overlap
-                        double overlap = minDist - dist;
-                        Vector2 correction = normal.scalar(overlap / 2.0);
-                        balls[i].setPosition(balls[i].getPosition().sum(correction));
-                        balls[j].setPosition(balls[j].getPosition().difference(correction));
-                    }
-                }
+                balls[i].velocity.x += jImpulse * nx;
+                balls[i].velocity.y += jImpulse * ny;
+                balls[j].velocity.x -= jImpulse * nx;
+                balls[j].velocity.y -= jImpulse * ny;
+
+                double overlap = (minDist - dist) / 2.0;
+                balls[i].position.x += overlap * nx;
+                balls[i].position.y += overlap * ny;
+                balls[j].position.x -= overlap * nx;
+                balls[j].position.y -= overlap * ny;
             }
         }
     }
 
-    public void shootCueBall(){
+    public void shootCueBall() {
 
         boolean isCurrentlyPressed = inputHandler.isPressedMouse(MouseButton.PRIMARY);
 
         // if the primary button is pressed and wasn't pressed in the frame before, set the startingPoint
-        if(isCurrentlyPressed && !mouseWasPressed){
+        if (isCurrentlyPressed && !mouseWasPressed) {
             startingPoint = inputHandler.getMousePosition();
         }
 
         // if the primary button isn't pressed but was in the last frame, set the endPoint and apply a force to the cue ball
-        if(!isCurrentlyPressed && mouseWasPressed){
+        if (!isCurrentlyPressed && mouseWasPressed) {
             endPoint = inputHandler.getMousePosition();
             balls[21].velocity = endPoint.difference(startingPoint).scalar(-7.5);
         }
@@ -202,26 +225,171 @@ public class GameLogic
         mouseWasPressed = isCurrentlyPressed;
     }
 
-    public Ball[] getBalls(){
+    public Ball[] getBalls() {
         return balls;
     }
 
-    public void calculateWallCollisions(Ball ball, Scene scene){
-        double returnEnergy = .87;
-        if (ball.position.x > scene.getWidth() - ball.radius) {
-            ball.velocity.x = -Math.abs(ball.velocity.x) * returnEnergy;
-            ball.position.x = scene.getWidth() - ball.radius;
-        } else if (ball.position.x < ball.radius) {
-            ball.velocity.x = Math.abs(ball.velocity.x) * returnEnergy;
-            ball.position.x = ball.radius;
-        }
+    public void calculateWallCollisions(Ball ball, Scene scene, Cushion[] cushions) {
+        final double returnEnergy = 0.87;
 
-        if (ball.position.y > scene.getHeight() - ball.radius) {
-            ball.velocity.y = -Math.abs(ball.velocity.y) * returnEnergy;
-            ball.position.y = scene.getHeight() - ball.radius;
-        } else if (ball.position.y < ball.radius) {
-            ball.velocity.y = Math.abs(ball.velocity.y) * returnEnergy;
-            ball.position.y = ball.radius;
+        for (Cushion cushion : cushions) {
+            LineSegment[] pts = cushion.segments;
+            int n = pts.length;
+
+            for (int i = 0; i < n; i++) {
+                Vector2 a = pts[i].a;
+                Vector2 b = pts[i].b;
+
+                double edgeX = b.x - a.x;
+                double edgeY = b.y - a.y;
+                double edgeLen = Math.sqrt(edgeX * edgeX + edgeY * edgeY);
+                if (edgeLen < 1e-6) continue;
+
+                double nx = edgeY / edgeLen;
+                double ny = -edgeX / edgeLen;
+
+                double toCentreX = (scene.getWidth() / 2.0) - a.x;
+                double toCentreY = (scene.getHeight() / 2.0) - a.y;
+                if (nx * toCentreX + ny * toCentreY < 0) {
+                    nx = -nx;
+                    ny = -ny;
+                }
+
+                double dx = ball.position.x - a.x;
+                double dy = ball.position.y - a.y;
+                double dist = dx * nx + dy * ny;
+
+                if (dist < -ball.radius || dist >= ball.radius) continue;
+
+                double edgeUX = edgeX / edgeLen;
+                double edgeUY = edgeY / edgeLen;
+                double t = dx * edgeUX + dy * edgeUY;
+                if (t < -ball.radius || t > edgeLen + ball.radius) continue;
+
+                double vDotN = ball.velocity.x * nx + ball.velocity.y * ny;
+                if (vDotN >= 0) continue;
+
+                ball.velocity.x -= (1 + returnEnergy) * vDotN * nx;
+                ball.velocity.y -= (1 + returnEnergy) * vDotN * ny;
+
+                double penetration = ball.radius - dist;
+                if (penetration > 0) {
+                    ball.position.x += penetration * nx;
+                    ball.position.y += penetration * ny;
+                }
+            }
         }
     }
+
+    public Cushion[] instantiateCushions(float BASE_WIDTH, float BASE_HEIGHT) {
+        BASE_WIDTH *= SCALING_FACTOR;
+        BASE_HEIGHT *= SCALING_FACTOR;
+
+        float railX = BASE_WIDTH * 0.04f;
+        float railY = BASE_HEIGHT * 0.07f;
+
+        float cornerJawX = BASE_WIDTH * 0.015f;
+        float cornerJawY = BASE_HEIGHT * 0.035f;
+        float sideJawX = BASE_WIDTH * 0.025f;
+        float diagOffset = cornerJawX * -1f;
+
+        float faceTop = railY;
+        float faceBottom = BASE_HEIGHT - railY;
+        float faceLeft = railX;
+        float faceRight = BASE_WIDTH - railX;
+        float pocketCX = BASE_WIDTH / 2f;
+
+        Cushion topLeft = new Cushion(new LineSegment[]{
+                new LineSegment(
+                        new Vector2(faceLeft - diagOffset * 0.25f, faceTop + diagOffset * 0.7),
+                        new Vector2(faceLeft + cornerJawX, faceTop)
+                ),
+                new LineSegment(
+                        new Vector2(faceLeft + cornerJawX, faceTop),
+                        new Vector2(pocketCX - sideJawX, faceTop)
+                ),
+                new LineSegment(
+                        new Vector2(pocketCX - sideJawX, faceTop),
+                        new Vector2(pocketCX - sideJawX * .55f, faceTop + diagOffset * 0.7f)
+                )
+        });
+
+        Cushion topRight = new Cushion(new LineSegment[]{
+                new LineSegment(
+                        new Vector2(pocketCX + sideJawX * 0.55f, faceTop + diagOffset * 0.7f),
+                        new Vector2(pocketCX + sideJawX, faceTop)
+                ),
+                new LineSegment(
+                        new Vector2(pocketCX + sideJawX, faceTop),
+                        new Vector2(faceRight - cornerJawX, faceTop)
+                ),
+                new LineSegment(
+                        new Vector2(faceRight - cornerJawX, faceTop),
+                        new Vector2(faceRight + diagOffset * 0.25f, faceTop + diagOffset * 0.7f)
+                )
+        });
+
+        Cushion bottomLeft = new Cushion(new LineSegment[]{
+                new LineSegment(
+                        new Vector2(faceLeft - diagOffset * 0.25f, faceBottom - diagOffset * 0.7f),
+                        new Vector2(faceLeft + cornerJawX, faceBottom)
+                ),
+                new LineSegment(
+                        new Vector2(faceLeft + cornerJawX, faceBottom),
+                        new Vector2(pocketCX - sideJawX, faceBottom)
+                ),
+                new LineSegment(
+                        new Vector2(pocketCX - sideJawX, faceBottom),
+                        new Vector2(pocketCX - sideJawX * 0.55f, faceBottom - diagOffset * 0.7f)
+                )
+        });
+
+        Cushion bottomRight = new Cushion(new LineSegment[]{
+                new LineSegment(
+                        new Vector2(pocketCX + sideJawX * 0.55f, faceBottom - diagOffset * 0.7f),
+                        new Vector2(pocketCX + sideJawX, faceBottom)
+                ),
+                new LineSegment(
+                        new Vector2(pocketCX + sideJawX, faceBottom),
+                        new Vector2(faceRight - cornerJawX, faceBottom)
+                ),
+                new LineSegment(
+                        new Vector2(faceRight - cornerJawX, faceBottom),
+                        new Vector2(faceRight + diagOffset * 0.25f, faceBottom - diagOffset * 0.7f)
+                )
+        });
+
+        Cushion left = new Cushion(new LineSegment[]{
+                new LineSegment(
+                        new Vector2(faceLeft + diagOffset, faceTop + cornerJawY * 0.3f),
+                        new Vector2(faceLeft, faceTop + cornerJawY)
+                ),
+                new LineSegment(
+                        new Vector2(faceLeft, faceTop + cornerJawY),
+                        new Vector2(faceLeft, faceBottom - cornerJawY)
+                ),
+                new LineSegment(
+                        new Vector2(faceLeft, faceBottom - cornerJawY),
+                        new Vector2(faceLeft + diagOffset, faceBottom - cornerJawY * 0.3f)
+                )
+        });
+
+        Cushion right = new Cushion(new LineSegment[]{
+                new LineSegment(
+                        new Vector2(faceRight - diagOffset, faceTop + cornerJawY * 0.3f),
+                        new Vector2(faceRight, faceTop + cornerJawY)
+                ),
+                new LineSegment(
+                        new Vector2(faceRight, faceTop + cornerJawY),
+                        new Vector2(faceRight, faceBottom - cornerJawY)
+                ),
+                new LineSegment(
+                        new Vector2(faceRight, faceBottom - cornerJawY),
+                        new Vector2(faceRight - diagOffset, faceBottom - cornerJawY * 0.3f)
+                )
+        });
+
+        return new Cushion[]{topLeft, topRight, bottomLeft, bottomRight, left, right};
+    }
+
 }

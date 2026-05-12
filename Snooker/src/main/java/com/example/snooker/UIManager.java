@@ -5,7 +5,6 @@ import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.layout.*;
-import javafx.scene.shape.Line;
 import javafx.stage.Stage;
 
 public class UIManager extends Application
@@ -13,6 +12,9 @@ public class UIManager extends Application
 
     private long lastUpdate = 0;
     private GameLogic gameLogic = new GameLogic();
+
+    private static final double FIXED_STEP = 1.0 / 60;
+    private double accumulator = 0;
 
     public static void main(String[] args) {
         launch(args);
@@ -57,7 +59,11 @@ public class UIManager extends Application
                 lastUpdate = now;
 
                 //calls update function, called once per frame
-                gameLogic.update(deltaTime, scene, root);
+                accumulator += deltaTime;
+                while (accumulator >= FIXED_STEP) {
+                    gameLogic.update(FIXED_STEP, scene, root);
+                    accumulator -= FIXED_STEP;
+                }
             }
         }.start();
 
