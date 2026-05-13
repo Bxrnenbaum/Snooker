@@ -10,54 +10,41 @@ import javafx.scene.shape.Line;
 public class GameLogic {
 
     private int subSteps = 8;
-    private final ConfigReader config = new ConfigReader("src/main/resources/config.properties");
 
-    private final int BASE_WIDTH = 1600;
-    private final int BASE_HEIGHT = 800;
+    private final ConfigReader config = new ConfigReader("Snooker/src/main/resources/config.properties");
 
-    private int screenWidth = 1920;
-    private int screenHeight = 1080;
-    private double scaleX;
-    private double scaleY;
-    private double scale;
-    private double offsetX;
-    private double offsetY;
+    private final int width;
+    private final int height;
+    private final Scene scene;
+    private final Pane pane;
+
+    private final int BASE_WIDTH = 3200;
+    private final int BASE_HEIGHT = 1600;
+
+    private final double SCALING_FACTOR = .5;
 
     private Ball[] balls = new Ball[22];
-
     private Cushion[] cushions;
 
     private InputHandler inputHandler;
     private boolean mouseWasPressed;
 
-    Vector2 startingPoint;
-    Vector2 endPoint;
-
-    Scene scene;
-    Pane pane;
+    private Vector2 startingPoint;
+    private Vector2 endPoint;
 
     private Line aimLine;
 
     private boolean showCushionLines = true;
 
     public GameLogic(int width, int height, Scene scene, Pane pane) {
+        this.width = width;
+        this.height = height;
         this.scene = scene;
         this.pane = pane;
-        this.screenWidth = width;
-        this.screenHeight = height;
-
-        scaleX = (double) screenWidth / BASE_WIDTH;
-        scaleY = (double) screenHeight / BASE_HEIGHT;
-
-        scale = Math.min(scaleX, scaleY);
-
-        offsetX = ((double) screenWidth - BASE_WIDTH * scale) / 2;
-        offsetY = ((double) screenHeight - BASE_HEIGHT * scale) / 2;
     }
 
     public void onStart() {
-        config.load();
-        subSteps = config.getInt("substeps", 8);
+        loadSubsteps();
 
         balls[0] = new Ball(new Image("/redBall.png"), 11.5, new Vector2(296, 354), 1);
         balls[1] = new Ball(new Image("/redBall.png"), 11.5, new Vector2(296, 377), 1);
@@ -101,19 +88,18 @@ public class GameLogic {
             ball.setImage(new Image("/ball2.png"));
         }
 
-        inputHandler = new InputHandler(scene, scale, offsetX, offsetY);
+        inputHandler = new InputHandler(scene);
 
         aimLine = new Line();
         aimLine.setStrokeWidth(3);
-
         pane.getChildren().add(aimLine);
 
-        cushions = instantiateCushions();
+        cushions = instantiateCushions(BASE_WIDTH, BASE_HEIGHT);
 
         if (showCushionLines) {
             for (Cushion cushion : cushions) {
                 for (LineSegment seg : cushion.segments) {
-                    Line line = new Line(seg.a.x * scale + offsetX, seg.a.y * scale + offsetY, seg.b.x * scale + offsetX, seg.b.y * scale + offsetY);
+                    Line line = new Line(seg.a.x, seg.a.y, seg.b.x, seg.b.y);
                     line.setStroke(Color.WHITE);
                     line.setStrokeWidth(1.5);
                     pane.getChildren().add(line);
@@ -125,8 +111,7 @@ public class GameLogic {
     }
 
     public void update(double deltaTime) {
-        config.load();
-        subSteps = config.getInt("substeps", 8);
+        loadSubsteps();
 
         double friction = .45;
         double subDelta = deltaTime / subSteps;
@@ -139,7 +124,7 @@ public class GameLogic {
                 }
 
                 ball.position = ball.position.sum(ball.velocity.scalar(subDelta));
-                calculateWallCollisions(ball, cushions);
+                calculateWallCollisions(ball, scene, cushions);
             }
 
             handleCollisions();
@@ -175,10 +160,8 @@ public class GameLogic {
                 continue;
             }
 
-            ball.imageView.setX((ball.position.x * scale + offsetX) - ball.radius * scale);
-            ball.imageView.setY((ball.position.y * scale + offsetY) - ball.radius * scale);
-            ball.imageView.setFitWidth(ball.radius * 2 * scale);
-            ball.imageView.setFitHeight(ball.radius * 2 * scale);
+            ball.imageView.setX(ball.position.x - ball.radius);
+            ball.imageView.setY(ball.position.y - ball.radius);
 
             double speed = Math.sqrt(
                     ball.velocity.x * ball.velocity.x +
@@ -191,9 +174,22 @@ public class GameLogic {
         updateAimLine(areAllBallsStanding);
     }
 
+    private void loadSubsteps() {
+        config.load();
+
+        subSteps = config.getInt("substeps", 8);
+
+        if (subSteps < 1) {
+            subSteps = 1;
+        }
+
+        if (subSteps > 10) {
+            subSteps = 10;
+        }
+    }
+
     private void updateAimLine(boolean visible) {
         aimLine.setVisible(visible);
-        aimLine.setStrokeWidth(scale * 1.5);
 
         if (!visible) {
             return;
@@ -216,11 +212,11 @@ public class GameLogic {
 
         Vector2 aimEnd = cueBallPos.sum(aim.normalize().scalar(power));
 
-        aimLine.setStartX(cueBallPos.x * scale + offsetX);
-        aimLine.setStartY(cueBallPos.y * scale + offsetY);
+        aimLine.setStartX(cueBallPos.x);
+        aimLine.setStartY(cueBallPos.y);
 
-        aimLine.setEndX(aimEnd.x * scale + offsetX);
-        aimLine.setEndY(aimEnd.y * scale + offsetY);
+        aimLine.setEndX(aimEnd.x);
+        aimLine.setEndY(aimEnd.y);
     }
 
     public void handleCollisions() {
@@ -289,7 +285,10 @@ public class GameLogic {
 
         if (!isCurrentlyPressed && mouseWasPressed) {
             endPoint = inputHandler.getMousePosition();
-            balls[21].velocity = endPoint.difference(startingPoint).scalar(-7.5);
+
+            if (startingPoint != null && endPoint != null) {
+                balls[21].velocity = endPoint.difference(startingPoint).scalar(-7.5);
+            }
         }
 
         mouseWasPressed = isCurrentlyPressed;
@@ -299,7 +298,7 @@ public class GameLogic {
         return balls;
     }
 
-    public void calculateWallCollisions(Ball ball, Cushion[] cushions) {
+    public void calculateWallCollisions(Ball ball, Scene scene, Cushion[] cushions) {
         final double returnEnergy = 0.87;
 
         for (Cushion cushion : cushions) {
@@ -321,8 +320,8 @@ public class GameLogic {
                 double nx = edgeY / edgeLen;
                 double ny = -edgeX / edgeLen;
 
-                double toCentreX = (BASE_WIDTH / 2.0) - a.x;
-                double toCentreY = (BASE_HEIGHT / 2.0) - a.y;
+                double toCentreX = (scene.getWidth() / 2.0) - a.x;
+                double toCentreY = (scene.getHeight() / 2.0) - a.y;
 
                 if (nx * toCentreX + ny * toCentreY < 0) {
                     nx = -nx;
@@ -364,7 +363,9 @@ public class GameLogic {
         }
     }
 
-    public Cushion[] instantiateCushions() {
+    public Cushion[] instantiateCushions(float BASE_WIDTH, float BASE_HEIGHT) {
+        BASE_WIDTH *= SCALING_FACTOR;
+        BASE_HEIGHT *= SCALING_FACTOR;
 
         float railX = BASE_WIDTH * 0.04f;
         float railY = BASE_HEIGHT * 0.07f;
@@ -470,6 +471,13 @@ public class GameLogic {
                 )
         });
 
-        return new Cushion[]{topLeft, topRight, bottomLeft, bottomRight, left, right};
+        return new Cushion[]{
+                topLeft,
+                topRight,
+                bottomLeft,
+                bottomRight,
+                left,
+                right
+        };
     }
 }

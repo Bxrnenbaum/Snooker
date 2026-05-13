@@ -17,15 +17,7 @@ public class InputHandler {
     private double mouseX;
     private double mouseY;
 
-    private double scale;
-    private double offsetX;
-    private double offsetY;
-
-    public InputHandler(Scene scene, double scale, double offsetX, double offsetY) {
-        this.scale = scale;
-        this.offsetX = offsetX;
-        this.offsetY = offsetY;
-
+    public InputHandler(Scene scene) {
         scene.addEventHandler(KeyEvent.KEY_PRESSED, e -> activeKeys.add(e.getCode()));
         scene.addEventHandler(KeyEvent.KEY_RELEASED, e -> activeKeys.remove(e.getCode()));
 
@@ -33,16 +25,15 @@ public class InputHandler {
         scene.addEventHandler(MouseEvent.MOUSE_RELEASED, e -> activeMouseButtons.remove(e.getButton()));
 
         scene.addEventHandler(MouseEvent.MOUSE_MOVED, e -> {
-            mouseX = (e.getSceneX() - offsetX) / scale;
-            mouseY = (e.getSceneY() - offsetY) / scale;
+            mouseX = e.getSceneX();
+            mouseY = e.getSceneY();
         });
 
         scene.addEventHandler(MouseEvent.MOUSE_DRAGGED, e -> {
-            mouseX = (e.getSceneX() - offsetX) / scale;
-            mouseY = (e.getSceneY() - offsetY) / scale;
+            mouseX = e.getSceneX();
+            mouseY = e.getSceneY();
         });
     }
-
 
     public boolean isPressed(KeyCode code) {
         return activeKeys.contains(code);
