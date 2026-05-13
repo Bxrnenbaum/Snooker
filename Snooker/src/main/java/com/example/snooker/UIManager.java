@@ -14,15 +14,13 @@ import javafx.scene.control.Slider;
 
 public class UIManager extends Application {
 
-    private static final int WIDTH = 1600;
-    private static final int HEIGHT = 800;
+    private static final int WIDTH = 900;
+    private static final int HEIGHT = (int) (WIDTH * 0.5);
 
     private long lastUpdate = 0;
 
     private Stage primaryStage;
     private AnimationTimer gameLoop;
-    private GameLogic gameLogic = new GameLogic();
-
     private StackPane gameRoot;
     private Pane gamePane;
     private VBox pauseMenu;
@@ -108,7 +106,6 @@ public class UIManager extends Application {
 
         paused = false;
         lastUpdate = 0;
-        gameLogic = new GameLogic();
 
         gameRoot = new StackPane();
         gamePane = new Pane();
@@ -127,7 +124,8 @@ public class UIManager extends Application {
 
         Scene scene = new Scene(gameRoot, WIDTH, HEIGHT);
 
-        gameLogic.onStart(scene, gamePane);
+        GameLogic gameLogic = new GameLogic(WIDTH, HEIGHT, scene, gamePane);
+        gameLogic.onStart();
 
         for (Ball ball : gameLogic.getBalls()) {
             if (ball == null) continue;
@@ -155,7 +153,7 @@ public class UIManager extends Application {
                 double deltaTime = (now - lastUpdate) / 1_000_000_000.0;
                 lastUpdate = now;
 
-                gameLogic.update(deltaTime, scene, gamePane);
+                gameLogic.update(deltaTime);
             }
         };
 
