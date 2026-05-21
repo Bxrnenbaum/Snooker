@@ -29,6 +29,7 @@ public class UIManager extends Application {
 
     private boolean paused = false;
 
+
     private final ConfigReader config = new ConfigReader("Snooker/src/main/resources/config.properties");
 
     public static void main(String[] args) {

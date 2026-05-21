@@ -60,5 +60,4 @@ public class Ball {
         return radius;
     }
 
-
 }
