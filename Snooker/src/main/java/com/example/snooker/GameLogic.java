@@ -11,7 +11,8 @@ public class GameLogic {
 
     private int subSteps = 8;
 
-    private final ConfigReader config = new ConfigReader("Snooker/src/main/resources/config.properties");
+    String filePath = new java.io.File("src/main/resources/config.properties").getAbsolutePath();
+    private final ConfigReader config = new ConfigReader(filePath);
 
     private final int width;
     private final int height;

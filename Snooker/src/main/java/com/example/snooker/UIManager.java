@@ -30,7 +30,8 @@ public class UIManager extends Application {
     private boolean paused = false;
 
 
-    private final ConfigReader config = new ConfigReader("Snooker/src/main/resources/config.properties");
+    String filePath = new java.io.File("src/main/resources/config.properties").getAbsolutePath();
+    private final ConfigReader config = new ConfigReader(filePath);
 
     public static void main(String[] args) {
         launch(args);
