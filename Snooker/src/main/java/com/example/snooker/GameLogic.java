@@ -14,15 +14,17 @@ public class GameLogic {
     String filePath = new java.io.File("src/main/resources/config.properties").getAbsolutePath();
     private final ConfigReader config = new ConfigReader(filePath);
 
-    private final int width;
-    private final int height;
+    private final int width; //Display width
+    private final int height; //Display height
     private final Scene scene;
     private final Pane pane;
 
+    //Internal coordinate space, used for physics calculations
     private final int BASE_WIDTH = 3200;
     private final int BASE_HEIGHT = 1600;
 
-    private final double SCALING_FACTOR = .5;
+    private double scaleX;
+    private double scaleY;
 
     private Ball[] balls = new Ball[22];
     private Cushion[] cushions;
@@ -42,57 +44,77 @@ public class GameLogic {
         this.height = height;
         this.scene = scene;
         this.pane = pane;
+
+        this.scaleX = (double) width / BASE_WIDTH;
+        this.scaleY = (double) height / BASE_HEIGHT;
     }
+
+
+    private double toDisplayX(double baseX) {
+        return baseX * scaleX;
+    }
+
+    private double toDisplayY(double baseY) {
+        return baseY * scaleY;
+    }
+
+    private double toBaseX(double displayX) {
+        return displayX / scaleX;
+    }
+
+    private double toBaseY(double displayY) {
+        return displayY / scaleY;
+    }
+
+    private Vector2 toBase(Vector2 display) {
+        return new Vector2(toBaseX(display.x), toBaseY(display.y));
+    }
+
 
     public void onStart() {
         loadSubsteps();
 
-        balls[0] = new Ball(new Image("/redBall.png"), 11.5, new Vector2(296, 354), 1);
-        balls[1] = new Ball(new Image("/redBall.png"), 11.5, new Vector2(296, 377), 1);
-        balls[2] = new Ball(new Image("/redBall.png"), 11.5, new Vector2(296, 400), 1);
-        balls[3] = new Ball(new Image("/redBall.png"), 11.5, new Vector2(296, 423), 1);
-        balls[4] = new Ball(new Image("/redBall.png"), 11.5, new Vector2(296, 446), 1);
-        balls[5] = new Ball(new Image("/redBall.png"), 11.5, new Vector2(316, 434.5), 1);
-        balls[6] = new Ball(new Image("/redBall.png"), 11.5, new Vector2(316, 411.5), 1);
-        balls[7] = new Ball(new Image("/redBall.png"), 11.5, new Vector2(316, 388.5), 1);
-        balls[8] = new Ball(new Image("/redBall.png"), 11.5, new Vector2(316, 365.5), 1);
-        balls[9] = new Ball(new Image("/redBall.png"), 11.5, new Vector2(336, 423), 1);
-        balls[10] = new Ball(new Image("/redBall.png"), 11.5, new Vector2(336, 400), 1);
-        balls[11] = new Ball(new Image("/redBall.png"), 11.5, new Vector2(336, 377), 1);
-        balls[12] = new Ball(new Image("/redBall.png"), 11.5, new Vector2(356, 411.5), 1);
-        balls[13] = new Ball(new Image("/redBall.png"), 11.5, new Vector2(356, 388.5), 1);
-        balls[14] = new Ball(new Image("/redBall.png"), 11.5, new Vector2(376, 400), 1);
+        //initialize balls in BASE_WIDTH and BASE_HEIGHT space
+        balls[0] = new Ball(new Image("/redBall.png"), 23, new Vector2(592, 708), 1);
+        balls[1] = new Ball(new Image("/redBall.png"), 23, new Vector2(592, 754), 1);
+        balls[2] = new Ball(new Image("/redBall.png"), 23, new Vector2(592, 800), 1);
+        balls[3] = new Ball(new Image("/redBall.png"), 23, new Vector2(592, 846), 1);
+        balls[4] = new Ball(new Image("/redBall.png"), 23, new Vector2(592, 892), 1);
+        balls[5] = new Ball(new Image("/redBall.png"), 23, new Vector2(632, 869), 1);
+        balls[6] = new Ball(new Image("/redBall.png"), 23, new Vector2(632, 823), 1);
+        balls[7] = new Ball(new Image("/redBall.png"), 23, new Vector2(632, 777), 1);
+        balls[8] = new Ball(new Image("/redBall.png"), 23, new Vector2(632, 731), 1);
+        balls[9] = new Ball(new Image("/redBall.png"), 23, new Vector2(672, 846), 1);
+        balls[10] = new Ball(new Image("/redBall.png"), 23, new Vector2(672, 800), 1);
+        balls[11] = new Ball(new Image("/redBall.png"), 23, new Vector2(672, 754), 1);
+        balls[12] = new Ball(new Image("/redBall.png"), 23, new Vector2(712, 823), 1);
+        balls[13] = new Ball(new Image("/redBall.png"), 23, new Vector2(712, 777), 1);
+        balls[14] = new Ball(new Image("/redBall.png"), 23, new Vector2(752, 800), 1);
 
-        balls[15] = new Ball(new Image("/greenBall.png"), 11.5, new Vector2(1280, 467), 2);
-        balls[16] = new Ball(new Image("/yellowBall.png"), 11.5, new Vector2(1280, 333), 3);
-        balls[17] = new Ball(new Image("/brownBall.png"), 11.5, new Vector2(1280, 400), 4);
-        balls[18] = new Ball(new Image("/blueBall.png"), 11.5, new Vector2(800, 400), 5);
-        balls[19] = new Ball(new Image("/pinkBall.png"), 11.5, new Vector2(400, 400), 6);
+        balls[15] = new Ball(new Image("/greenBall.png"), 23, new Vector2(2560, 934), 2);
+        balls[16] = new Ball(new Image("/yellowBall.png"), 23, new Vector2(2560, 666), 3);
+        balls[17] = new Ball(new Image("/brownBall.png"), 23, new Vector2(2560, 800), 4);
+        balls[18] = new Ball(new Image("/blueBall.png"), 23, new Vector2(1600, 800), 5);
+        balls[19] = new Ball(new Image("/pinkBall.png"), 23, new Vector2(800, 800), 6);
 
         if (Math.random() <= .01) {
-            balls[20] = new Ball(new Image("/ball2.png"), 11.5, new Vector2(146, 400), 7);
+            balls[20] = new Ball(new Image("/ball2.png"), 23, new Vector2(292, 800), 7);
         } else {
-            balls[20] = new Ball(new Image("/blackBall.png"), 11.5, new Vector2(146, 400), 7);
+            balls[20] = new Ball(new Image("/blackBall.png"), 23, new Vector2(292, 800), 7);
         }
 
-        balls[21] = new Ball(new Image("/cueBall.png"), 11.5, new Vector2(1350, 360), 0);
+        balls[21] = new Ball(new Image("/cueBall.png"), 23, new Vector2(2700, 720), 0);
 
         for (Ball ball : balls) {
-            if (ball == null) {
-                continue;
-            }
-
-            if (ball.image != null) {
-                continue;
-            }
-
+            if (ball == null) continue;
+            if (ball.image != null) continue;
             ball.setImage(new Image("/ball2.png"));
         }
 
         inputHandler = new InputHandler(scene);
 
         aimLine = new Line();
-        aimLine.setStrokeWidth(3);
+        aimLine.setStrokeWidth(toDisplayX(5));
         pane.getChildren().add(aimLine);
 
         cushions = instantiateCushions(BASE_WIDTH, BASE_HEIGHT);
@@ -100,7 +122,11 @@ public class GameLogic {
         if (showCushionLines) {
             for (Cushion cushion : cushions) {
                 for (LineSegment seg : cushion.segments) {
-                    Line line = new Line(seg.a.x, seg.a.y, seg.b.x, seg.b.y);
+                    // Convert to display space for rendering
+                    Line line = new Line(
+                            toDisplayX(seg.a.x), toDisplayY(seg.a.y),
+                            toDisplayX(seg.b.x), toDisplayY(seg.b.y)
+                    );
                     line.setStroke(Color.WHITE);
                     line.setStrokeWidth(1.5);
                     pane.getChildren().add(line);
@@ -120,32 +146,22 @@ public class GameLogic {
 
         for (int step = 0; step < subSteps; step++) {
             for (Ball ball : balls) {
-                if (ball == null) {
-                    continue;
-                }
-
+                if (ball == null) continue;
                 ball.position = ball.position.sum(ball.velocity.scalar(subDelta));
-                calculateWallCollisions(ball, scene, cushions);
+                calculateWallCollisions(ball, cushions);
             }
 
             handleCollisions();
 
             for (Ball ball : balls) {
-                if (ball == null) {
-                    continue;
-                }
-
+                if (ball == null) continue;
                 ball.velocity = ball.velocity.scalar(frictionFactorPerSubStep);
             }
         }
 
         boolean areAllBallsStanding = true;
-
         for (Ball ball : balls) {
-            if (ball == null) {
-                continue;
-            }
-
+            if (ball == null) continue;
             if (ball.velocity.magnitude() >= 1) {
                 areAllBallsStanding = false;
                 break;
@@ -157,18 +173,19 @@ public class GameLogic {
         }
 
         for (Ball ball : balls) {
-            if (ball == null) {
-                continue;
-            }
+            if (ball == null) continue;
 
-            ball.imageView.setX(ball.position.x - ball.radius);
-            ball.imageView.setY(ball.position.y - ball.radius);
+            double displayX = toDisplayX(ball.position.x);
+            double displayY = toDisplayY(ball.position.y);
+            double displayRadius = ball.radius * scaleX;
 
-            double speed = Math.sqrt(
-                    ball.velocity.x * ball.velocity.x +
-                            ball.velocity.y * ball.velocity.y
-            );
+            ball.imageView.setX(displayX - displayRadius);
+            ball.imageView.setY(displayY - displayRadius);
 
+            ball.imageView.setFitWidth(displayRadius * 2);
+            ball.imageView.setFitHeight(displayRadius * 2);
+
+            double speed = ball.velocity.magnitude();
             ball.imageView.setRotate(ball.imageView.getRotate() + (speed * deltaTime) % 360);
         }
 
@@ -177,24 +194,14 @@ public class GameLogic {
 
     private void loadSubsteps() {
         config.load();
-
         subSteps = config.getInt("substeps", 8);
-
-        if (subSteps < 1) {
-            subSteps = 1;
-        }
-
-        if (subSteps > 10) {
-            subSteps = 10;
-        }
+        if (subSteps < 1) subSteps = 1;
+        if (subSteps > 10) subSteps = 10;
     }
 
     private void updateAimLine(boolean visible) {
         aimLine.setVisible(visible);
-
-        if (!visible) {
-            return;
-        }
+        if (!visible) return;
 
         boolean isCurrentlyPressed = inputHandler.isPressedMouse(MouseButton.PRIMARY);
 
@@ -203,51 +210,41 @@ public class GameLogic {
             return;
         }
 
-        Vector2 currentMouse = inputHandler.getMousePosition();
+        Vector2 currentMouseBase = toBase(inputHandler.getMousePosition());
+        Vector2 startingPointBase = startingPoint;
         Vector2 cueBallPos = balls[21].position;
 
-        Vector2 drag = currentMouse.difference(startingPoint);
+        Vector2 drag = currentMouseBase.difference(startingPointBase);
         Vector2 aim = drag.scalar(-1);
-
         double power = drag.magnitude() * 2;
 
-        Vector2 aimEnd = cueBallPos.sum(aim.normalize().scalar(power));
+        Vector2 aimEndBase = cueBallPos.sum(aim.normalize().scalar(power));
 
-        aimLine.setStartX(cueBallPos.x);
-        aimLine.setStartY(cueBallPos.y);
-
-        aimLine.setEndX(aimEnd.x);
-        aimLine.setEndY(aimEnd.y);
+        aimLine.setStartX(toDisplayX(cueBallPos.x));
+        aimLine.setStartY(toDisplayY(cueBallPos.y));
+        aimLine.setEndX(toDisplayX(aimEndBase.x));
+        aimLine.setEndY(toDisplayY(aimEndBase.y));
     }
 
     public void handleCollisions() {
         final double e = 0.95;
-        final double minDist = 23.0;
+        final double minDist = 2 * balls[21].radius;
         final double minDistSq = minDist * minDist;
 
         for (int i = 0; i < balls.length; i++) {
-            if (balls[i] == null) {
-                continue;
-            }
+            if (balls[i] == null) continue;
 
             for (int j = i + 1; j < balls.length; j++) {
-                if (balls[j] == null) {
-                    continue;
-                }
+                if (balls[j] == null) continue;
 
                 double dx = balls[i].position.x - balls[j].position.x;
                 double dy = balls[i].position.y - balls[j].position.y;
                 double distSq = dx * dx + dy * dy;
 
-                if (distSq >= minDistSq) {
-                    continue;
-                }
+                if (distSq >= minDistSq) continue;
 
                 double dist = Math.sqrt(distSq);
-
-                if (dist == 0) {
-                    dist = 0.01;
-                }
+                if (dist == 0) dist = 0.01;
 
                 double nx = dx / dist;
                 double ny = dy / dist;
@@ -256,9 +253,7 @@ public class GameLogic {
                 double dvy = balls[i].velocity.y - balls[j].velocity.y;
                 double speedAlongNormal = dvx * nx + dvy * ny;
 
-                if (speedAlongNormal >= 0) {
-                    continue;
-                }
+                if (speedAlongNormal >= 0) continue;
 
                 double jImpulse = -(1 + e) * speedAlongNormal / 2.0;
 
@@ -268,7 +263,6 @@ public class GameLogic {
                 balls[j].velocity.y -= jImpulse * ny;
 
                 double overlap = (minDist - dist) / 2.0;
-
                 balls[i].position.x += overlap * nx;
                 balls[i].position.y += overlap * ny;
                 balls[j].position.x -= overlap * nx;
@@ -281,11 +275,11 @@ public class GameLogic {
         boolean isCurrentlyPressed = inputHandler.isPressedMouse(MouseButton.PRIMARY);
 
         if (isCurrentlyPressed && !mouseWasPressed) {
-            startingPoint = inputHandler.getMousePosition();
+            startingPoint = toBase(inputHandler.getMousePosition());
         }
 
         if (!isCurrentlyPressed && mouseWasPressed) {
-            endPoint = inputHandler.getMousePosition();
+            endPoint = toBase(inputHandler.getMousePosition());
 
             if (startingPoint != null && endPoint != null) {
                 balls[21].velocity = endPoint.difference(startingPoint).scalar(-7.5);
@@ -299,31 +293,28 @@ public class GameLogic {
         return balls;
     }
 
-    public void calculateWallCollisions(Ball ball, Scene scene, Cushion[] cushions) {
+    public void calculateWallCollisions(Ball ball, Cushion[] cushions) {
         final double returnEnergy = 0.87;
 
-        for (Cushion cushion : cushions) {
-            LineSegment[] pts = cushion.segments;
-            int n = pts.length;
+        double centreX = BASE_WIDTH / 2.0;
+        double centreY = BASE_HEIGHT / 2.0;
 
-            for (int i = 0; i < n; i++) {
-                Vector2 a = pts[i].a;
-                Vector2 b = pts[i].b;
+        for (Cushion cushion : cushions) {
+            for (LineSegment seg : cushion.segments) {
+                Vector2 a = seg.a;
+                Vector2 b = seg.b;
 
                 double edgeX = b.x - a.x;
                 double edgeY = b.y - a.y;
                 double edgeLen = Math.sqrt(edgeX * edgeX + edgeY * edgeY);
 
-                if (edgeLen < 1e-6) {
-                    continue;
-                }
+                if (edgeLen < 1e-6) continue;
 
                 double nx = edgeY / edgeLen;
                 double ny = -edgeX / edgeLen;
 
-                double toCentreX = (scene.getWidth() / 2.0) - a.x;
-                double toCentreY = (scene.getHeight() / 2.0) - a.y;
-
+                double toCentreX = centreX - a.x;
+                double toCentreY = centreY - a.y;
                 if (nx * toCentreX + ny * toCentreY < 0) {
                     nx = -nx;
                     ny = -ny;
@@ -333,29 +324,21 @@ public class GameLogic {
                 double dy = ball.position.y - a.y;
                 double dist = dx * nx + dy * ny;
 
-                if (dist < -ball.radius || dist >= ball.radius) {
-                    continue;
-                }
+                if (dist < -ball.radius || dist >= ball.radius) continue;
 
                 double edgeUX = edgeX / edgeLen;
                 double edgeUY = edgeY / edgeLen;
                 double t = dx * edgeUX + dy * edgeUY;
 
-                if (t < -ball.radius || t > edgeLen + ball.radius) {
-                    continue;
-                }
+                if (t < -ball.radius || t > edgeLen + ball.radius) continue;
 
                 double vDotN = ball.velocity.x * nx + ball.velocity.y * ny;
-
-                if (vDotN >= 0) {
-                    continue;
-                }
+                if (vDotN >= 0) continue;
 
                 ball.velocity.x -= (1 + returnEnergy) * vDotN * nx;
                 ball.velocity.y -= (1 + returnEnergy) * vDotN * ny;
 
                 double penetration = ball.radius - dist;
-
                 if (penetration > 0) {
                     ball.position.x += penetration * nx;
                     ball.position.y += penetration * ny;
@@ -364,23 +347,20 @@ public class GameLogic {
         }
     }
 
-    public Cushion[] instantiateCushions(float BASE_WIDTH, float BASE_HEIGHT) {
-        BASE_WIDTH *= SCALING_FACTOR;
-        BASE_HEIGHT *= SCALING_FACTOR;
+    public Cushion[] instantiateCushions(float bw, float bh) {
+        float railX = bw * 0.04f;
+        float railY = bh * 0.07f;
 
-        float railX = BASE_WIDTH * 0.04f;
-        float railY = BASE_HEIGHT * 0.07f;
-
-        float cornerJawX = BASE_WIDTH * 0.015f;
-        float cornerJawY = BASE_HEIGHT * 0.035f;
-        float sideJawX = BASE_WIDTH * 0.025f;
+        float cornerJawX = bw * 0.015f;
+        float cornerJawY = bh * 0.035f;
+        float sideJawX = bw * 0.025f;
         float diagOffset = cornerJawX * -1f;
 
         float faceTop = railY;
-        float faceBottom = BASE_HEIGHT - railY;
+        float faceBottom = bh - railY;
         float faceLeft = railX;
-        float faceRight = BASE_WIDTH - railX;
-        float pocketCX = BASE_WIDTH / 2f;
+        float faceRight = bw - railX;
+        float pocketCX = bw / 2f;
 
         Cushion topLeft = new Cushion(new LineSegment[]{
                 new LineSegment(
@@ -472,13 +452,6 @@ public class GameLogic {
                 )
         });
 
-        return new Cushion[]{
-                topLeft,
-                topRight,
-                bottomLeft,
-                bottomRight,
-                left,
-                right
-        };
+        return new Cushion[]{topLeft, topRight, bottomLeft, bottomRight, left, right};
     }
 }
