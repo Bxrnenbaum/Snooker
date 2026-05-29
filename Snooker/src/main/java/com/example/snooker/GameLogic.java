@@ -37,7 +37,7 @@ public class GameLogic {
 
     private Line aimLine;
 
-    private boolean showCushionLines = true;
+    private boolean showCushionLines = false;
 
     public GameLogic(int width, int height, Scene scene, Pane pane) {
         this.width = width;

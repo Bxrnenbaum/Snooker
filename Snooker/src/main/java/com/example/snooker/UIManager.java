@@ -54,12 +54,12 @@ public class UIManager extends Application {
 
         width = config.getInt("width", 1600);
 
-        if (width < 800) {
-            width = 800;
+        if (width < 500) {
+            width = 500;
         }
 
-        if (width > 3200) {
-            width = 3200;
+        if (width > 8000) {
+            width = 8000;
         }
 
         height = (int) (width * 0.5);
@@ -99,7 +99,7 @@ public class UIManager extends Application {
 
         Label substepsLabel = new Label("Substeps: " + savedSubsteps);
 
-        Slider substepsSlider = new Slider(1, 10, savedSubsteps);
+        Slider substepsSlider = new Slider(1, 20, savedSubsteps);
         substepsSlider.setShowTickLabels(true);
         substepsSlider.setShowTickMarks(true);
         substepsSlider.setMajorTickUnit(1);
@@ -133,14 +133,6 @@ public class UIManager extends Application {
         saveWidthButton.setOnAction(e -> {
             try {
                 int newWidth = Integer.parseInt(widthInput.getText());
-
-                if (newWidth < 800) {
-                    newWidth = 800;
-                }
-
-                if (newWidth > 3200) {
-                    newWidth = 3200;
-                }
 
                 config.setInt("width", newWidth);
                 config.save();
