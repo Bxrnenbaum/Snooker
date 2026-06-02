@@ -5,6 +5,7 @@ import javafx.scene.image.Image;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
 
 public class GameLogic {
@@ -28,6 +29,8 @@ public class GameLogic {
 
     private Ball[] balls = new Ball[22];
     private Cushion[] cushions;
+    private Vector2[] holes;
+    private float holeRadius = 45;
 
     private InputHandler inputHandler;
     private boolean mouseWasPressed;
@@ -37,7 +40,7 @@ public class GameLogic {
 
     private Line aimLine;
 
-    private boolean showCushionLines = false;
+    private boolean showDebugLines = true;
 
     public GameLogic(int width, int height, Scene scene, Pane pane) {
         this.width = width;
@@ -140,8 +143,9 @@ public class GameLogic {
         pane.getChildren().add(aimLine);
 
         cushions = instantiateCushions(BASE_WIDTH, BASE_HEIGHT);
+        holes = instantiateHoles(BASE_WIDTH);
 
-        if (showCushionLines) {
+        if (showDebugLines) {
             for (Cushion cushion : cushions) {
                 for (LineSegment seg : cushion.segments) {
                     // Convert to display space for rendering
@@ -153,6 +157,22 @@ public class GameLogic {
                     line.setStrokeWidth(1.5);
                     pane.getChildren().add(line);
                 }
+            }
+            for (Vector2 hole : holes) {
+                double displayX = toDisplayX(hole.x);
+                double displayY = toDisplayY(hole.y);
+
+                double displayRadius = toDisplayX(holeRadius) - toDisplayX(0);
+
+                Circle outline = new Circle(displayX, displayY, displayRadius);
+                outline.setFill(Color.TRANSPARENT);
+                outline.setStroke(Color.WHITE);
+                outline.setStrokeWidth(1.5);
+
+                Circle centerDot = new Circle(displayX, displayY, 2.0);
+                centerDot.setFill(Color.WHITE);
+
+                pane.getChildren().addAll(outline, centerDot);
             }
         }
 
@@ -171,6 +191,7 @@ public class GameLogic {
                 if (ball == null) continue;
                 ball.position = ball.position.sum(ball.velocity.scalar(subDelta));
                 calculateWallCollisions(ball, cushions);
+                potBall(ball, holes);
             }
 
             handleCollisions();
@@ -303,7 +324,7 @@ public class GameLogic {
         if (!isCurrentlyPressed && mouseWasPressed) {
             endPoint = toBase(inputHandler.getMousePosition());
 
-            if (startingPoint != null && endPoint != null) {
+            if (startingPoint != null) {
                 balls[21].velocity = endPoint.difference(startingPoint).scalar(-7.5);
             }
         }
@@ -318,9 +339,6 @@ public class GameLogic {
     public void calculateWallCollisions(Ball ball, Cushion[] cushions) {
         final double returnEnergy = 0.87;
 
-        double centreX = BASE_WIDTH / 2.0;
-        double centreY = BASE_HEIGHT / 2.0;
-
         for (Cushion cushion : cushions) {
             for (LineSegment seg : cushion.segments) {
                 Vector2 a = seg.a;
@@ -329,43 +347,57 @@ public class GameLogic {
                 double edgeX = b.x - a.x;
                 double edgeY = b.y - a.y;
                 double edgeLen = Math.sqrt(edgeX * edgeX + edgeY * edgeY);
-
                 if (edgeLen < 1e-6) continue;
-
-                double nx = edgeY / edgeLen;
-                double ny = -edgeX / edgeLen;
-
-                double toCentreX = centreX - a.x;
-                double toCentreY = centreY - a.y;
-                if (nx * toCentreX + ny * toCentreY < 0) {
-                    nx = -nx;
-                    ny = -ny;
-                }
 
                 double dx = ball.position.x - a.x;
                 double dy = ball.position.y - a.y;
-                double dist = dx * nx + dy * ny;
-
-                if (dist < -ball.radius || dist >= ball.radius) continue;
 
                 double edgeUX = edgeX / edgeLen;
                 double edgeUY = edgeY / edgeLen;
                 double t = dx * edgeUX + dy * edgeUY;
 
-                if (t < -ball.radius || t > edgeLen + ball.radius) continue;
+                double clampedT = Math.max(0, Math.min(edgeLen, t));
 
+                //find closest point on this segment to the ball
+                double closestX = a.x + clampedT * edgeUX;
+                double closestY = a.y + clampedT * edgeUY;
+
+                //calculate distance to closest point
+                double distVecX = ball.position.x - closestX;
+                double distVecY = ball.position.y - closestY;
+                double dist = Math.sqrt(distVecX * distVecX + distVecY * distVecY);
+                if (dist == 0) dist = 0.001; // Avoid division by 0
+
+                if (dist >= ball.radius) continue;
+
+                //calc normals of cushion faces
+                double nx = distVecX / dist;
+                double ny = distVecY / dist;
+
+                // prevent sticking to cushion
                 double vDotN = ball.velocity.x * nx + ball.velocity.y * ny;
                 if (vDotN >= 0) continue;
 
+                // bounce physics
                 ball.velocity.x -= (1 + returnEnergy) * vDotN * nx;
                 ball.velocity.y -= (1 + returnEnergy) * vDotN * ny;
 
+                // penetration corrections
                 double penetration = ball.radius - dist;
-                if (penetration > 0) {
-                    ball.position.x += penetration * nx;
-                    ball.position.y += penetration * ny;
-                }
+                ball.position.x += penetration * nx;
+                ball.position.y += penetration * ny;
             }
+        }
+    }
+
+    public void potBall(Ball ball, Vector2[] holes) {
+        for (Vector2 hole : holes) {
+            Vector2 dist = ball.position.difference(hole).abs();
+            if(dist.magnitude() <= holeRadius){
+                ball.fade(.3);
+                ball.velocity = Vector2.zero;
+            }
+
         }
     }
 
@@ -373,8 +405,8 @@ public class GameLogic {
         float railX = bw * 0.04f;
         float railY = bh * 0.07f;
 
-        float cornerJawX = bw * 0.015f;
-        float cornerJawY = bh * 0.035f;
+        float cornerJawX = bw * 0.02f;
+        float cornerJawY = bh * 0.04f;
         float sideJawX = bw * 0.025f;
         float diagOffset = cornerJawX * -1f;
 
@@ -476,4 +508,16 @@ public class GameLogic {
 
         return new Cushion[]{topLeft, topRight, bottomLeft, bottomRight, left, right};
     }
+
+    public Vector2[] instantiateHoles(float bw) {
+        return new Vector2[]{
+                new Vector2(106, 98),
+                new Vector2(bw / 2, 80),
+                new Vector2(3093, 98),
+                new Vector2(106, 1501),
+                new Vector2(bw / 2, 1519),
+                new Vector2(3093, 1501)
+        };
+    }
+
 }
