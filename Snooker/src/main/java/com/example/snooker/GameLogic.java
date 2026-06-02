@@ -5,6 +5,7 @@ import javafx.scene.image.Image;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
 
 public class GameLogic {
@@ -28,6 +29,8 @@ public class GameLogic {
 
     private Ball[] balls = new Ball[22];
     private Cushion[] cushions;
+    private Vector2[] holes;
+    private float holeRadius = 37;
 
     private InputHandler inputHandler;
     private boolean mouseWasPressed;
@@ -37,7 +40,7 @@ public class GameLogic {
 
     private Line aimLine;
 
-    private boolean showCushionLines = false;
+    private boolean showDebugLines = true;
 
     public GameLogic(int width, int height, Scene scene, Pane pane) {
         this.width = width;
@@ -118,8 +121,9 @@ public class GameLogic {
         pane.getChildren().add(aimLine);
 
         cushions = instantiateCushions(BASE_WIDTH, BASE_HEIGHT);
+        holes = instantiateHoles(BASE_WIDTH);
 
-        if (showCushionLines) {
+        if (showDebugLines) {
             for (Cushion cushion : cushions) {
                 for (LineSegment seg : cushion.segments) {
                     // Convert to display space for rendering
@@ -131,6 +135,22 @@ public class GameLogic {
                     line.setStrokeWidth(1.5);
                     pane.getChildren().add(line);
                 }
+            }
+            for (Vector2 hole : holes) {
+                double displayX = toDisplayX(hole.x);
+                double displayY = toDisplayY(hole.y);
+
+                double displayRadius = toDisplayX(holeRadius) - toDisplayX(0);
+
+                Circle outline = new Circle(displayX, displayY, displayRadius);
+                outline.setFill(Color.TRANSPARENT);
+                outline.setStroke(Color.WHITE);
+                outline.setStrokeWidth(1.5);
+
+                Circle centerDot = new Circle(displayX, displayY, 2.0);
+                centerDot.setFill(Color.WHITE);
+
+                pane.getChildren().addAll(outline, centerDot);
             }
         }
 
@@ -149,6 +169,7 @@ public class GameLogic {
                 if (ball == null) continue;
                 ball.position = ball.position.sum(ball.velocity.scalar(subDelta));
                 calculateWallCollisions(ball, cushions);
+                potBall(ball, holes);
             }
 
             handleCollisions();
@@ -347,6 +368,16 @@ public class GameLogic {
         }
     }
 
+    public void potBall(Ball ball, Vector2[] holes) {
+        for (Vector2 hole : holes) {
+            Vector2 dist = ball.position.difference(hole).abs();
+            if(dist.magnitude() <= holeRadius){
+                ball.fade(1);
+            }
+
+        }
+    }
+
     public Cushion[] instantiateCushions(float bw, float bh) {
         float railX = bw * 0.04f;
         float railY = bh * 0.07f;
@@ -454,4 +485,16 @@ public class GameLogic {
 
         return new Cushion[]{topLeft, topRight, bottomLeft, bottomRight, left, right};
     }
+
+    public Vector2[] instantiateHoles(float bw) {
+        return new Vector2[]{
+                new Vector2(106, 98),
+                new Vector2(bw / 2, 80),
+                new Vector2(3093, 98),
+                new Vector2(106, 1501),
+                new Vector2(bw / 2, 1519),
+                new Vector2(3093, 1501)
+        };
+    }
+
 }
