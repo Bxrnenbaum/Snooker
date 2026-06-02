@@ -166,7 +166,7 @@ public class GameLogic {
 
         for (int step = 0; step < subSteps; step++) {
             for (Ball ball : balls) {
-                if (ball == null) continue;
+                if (ball == null || !ball.isActive) continue;
                 ball.position = ball.position.sum(ball.velocity.scalar(subDelta));
                 calculateWallCollisions(ball, cushions);
                 potBall(ball, holes);
@@ -175,14 +175,14 @@ public class GameLogic {
             handleCollisions();
 
             for (Ball ball : balls) {
-                if (ball == null) continue;
+                if (ball == null || !ball.isActive) continue;
                 ball.velocity = ball.velocity.scalar(frictionFactorPerSubStep);
             }
         }
 
         boolean areAllBallsStanding = true;
         for (Ball ball : balls) {
-            if (ball == null) continue;
+            if (ball == null || !ball.isActive) continue;
             if (ball.velocity.magnitude() >= 1) {
                 areAllBallsStanding = false;
                 break;
@@ -194,7 +194,7 @@ public class GameLogic {
         }
 
         for (Ball ball : balls) {
-            if (ball == null) continue;
+            if (ball == null || !ball.isActive) continue;
 
             double displayX = toDisplayX(ball.position.x);
             double displayY = toDisplayY(ball.position.y);
@@ -253,10 +253,10 @@ public class GameLogic {
         final double minDistSq = minDist * minDist;
 
         for (int i = 0; i < balls.length; i++) {
-            if (balls[i] == null) continue;
+            if (balls[i] == null  || !balls[i].isActive) continue;
 
             for (int j = i + 1; j < balls.length; j++) {
-                if (balls[j] == null) continue;
+                if (balls[j] == null || !balls[j].isActive) continue;
 
                 double dx = balls[i].position.x - balls[j].position.x;
                 double dy = balls[i].position.y - balls[j].position.y;
@@ -374,8 +374,11 @@ public class GameLogic {
             if(dist.magnitude() <= holeRadius){
                 ball.fade(.3);
                 ball.velocity = Vector2.zero;
+                ball.isActive = false;
+                return;
             }
 
+            ball.isActive = true;
         }
     }
 
