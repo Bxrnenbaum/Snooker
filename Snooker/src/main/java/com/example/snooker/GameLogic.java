@@ -30,7 +30,7 @@ public class GameLogic {
     private Ball[] balls = new Ball[22];
     private Cushion[] cushions;
     private Vector2[] holes;
-    private float holeRadius = 37;
+    private float holeRadius = 45;
 
     private InputHandler inputHandler;
     private boolean mouseWasPressed;
@@ -302,7 +302,7 @@ public class GameLogic {
         if (!isCurrentlyPressed && mouseWasPressed) {
             endPoint = toBase(inputHandler.getMousePosition());
 
-            if (startingPoint != null && endPoint != null) {
+            if (startingPoint != null) {
                 balls[21].velocity = endPoint.difference(startingPoint).scalar(-7.5);
             }
         }
@@ -317,9 +317,6 @@ public class GameLogic {
     public void calculateWallCollisions(Ball ball, Cushion[] cushions) {
         final double returnEnergy = 0.87;
 
-        double centreX = BASE_WIDTH / 2.0;
-        double centreY = BASE_HEIGHT / 2.0;
-
         for (Cushion cushion : cushions) {
             for (LineSegment seg : cushion.segments) {
                 Vector2 a = seg.a;
@@ -328,42 +325,45 @@ public class GameLogic {
                 double edgeX = b.x - a.x;
                 double edgeY = b.y - a.y;
                 double edgeLen = Math.sqrt(edgeX * edgeX + edgeY * edgeY);
-
                 if (edgeLen < 1e-6) continue;
-
-                double nx = edgeY / edgeLen;
-                double ny = -edgeX / edgeLen;
-
-                double toCentreX = centreX - a.x;
-                double toCentreY = centreY - a.y;
-                if (nx * toCentreX + ny * toCentreY < 0) {
-                    nx = -nx;
-                    ny = -ny;
-                }
 
                 double dx = ball.position.x - a.x;
                 double dy = ball.position.y - a.y;
-                double dist = dx * nx + dy * ny;
-
-                if (dist < -ball.radius || dist >= ball.radius) continue;
 
                 double edgeUX = edgeX / edgeLen;
                 double edgeUY = edgeY / edgeLen;
                 double t = dx * edgeUX + dy * edgeUY;
 
-                if (t < -ball.radius || t > edgeLen + ball.radius) continue;
+                double clampedT = Math.max(0, Math.min(edgeLen, t));
 
+                //find closest point on this segment to the ball
+                double closestX = a.x + clampedT * edgeUX;
+                double closestY = a.y + clampedT * edgeUY;
+
+                //calculate distance to closest point
+                double distVecX = ball.position.x - closestX;
+                double distVecY = ball.position.y - closestY;
+                double dist = Math.sqrt(distVecX * distVecX + distVecY * distVecY);
+                if (dist == 0) dist = 0.001; // Avoid division by 0
+
+                if (dist >= ball.radius) continue;
+
+                //calc normals of cushion faces
+                double nx = distVecX / dist;
+                double ny = distVecY / dist;
+
+                // prevent sticking to cushion
                 double vDotN = ball.velocity.x * nx + ball.velocity.y * ny;
                 if (vDotN >= 0) continue;
 
+                // bounce physics
                 ball.velocity.x -= (1 + returnEnergy) * vDotN * nx;
                 ball.velocity.y -= (1 + returnEnergy) * vDotN * ny;
 
+                // penetration corrections
                 double penetration = ball.radius - dist;
-                if (penetration > 0) {
-                    ball.position.x += penetration * nx;
-                    ball.position.y += penetration * ny;
-                }
+                ball.position.x += penetration * nx;
+                ball.position.y += penetration * ny;
             }
         }
     }
@@ -372,7 +372,8 @@ public class GameLogic {
         for (Vector2 hole : holes) {
             Vector2 dist = ball.position.difference(hole).abs();
             if(dist.magnitude() <= holeRadius){
-                ball.fade(1);
+                ball.fade(.3);
+                ball.velocity = Vector2.zero;
             }
 
         }
@@ -382,8 +383,8 @@ public class GameLogic {
         float railX = bw * 0.04f;
         float railY = bh * 0.07f;
 
-        float cornerJawX = bw * 0.015f;
-        float cornerJawY = bh * 0.035f;
+        float cornerJawX = bw * 0.02f;
+        float cornerJawY = bh * 0.04f;
         float sideJawX = bw * 0.025f;
         float diagOffset = cornerJawX * -1f;
 
