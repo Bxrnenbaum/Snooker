@@ -239,7 +239,6 @@ public class GameLogic {
         config.load();
         subSteps = config.getInt("substeps", 8);
         if (subSteps < 1) subSteps = 1;
-        if (subSteps > 10) subSteps = 10;
     }
 
     private void updateAimLine(boolean visible) {
