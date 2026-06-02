@@ -11,8 +11,8 @@ public class GameLogic {
 
     private int subSteps = 8;
 
-    String filePath = new java.io.File("src/main/resources/config.properties").getAbsolutePath();
-    private final ConfigReader config = new ConfigReader(filePath);
+    String filePath = new java.io.File("config.properties").getAbsolutePath();
+    private final ConfigReader config = new ConfigReader();
 
     private final int width; //Display width
     private final int height; //Display height
@@ -73,38 +73,60 @@ public class GameLogic {
 
     public void onStart() {
         loadSubsteps();
+        Vector2[] positions = {
+                new Vector2(592, 708),
+                new Vector2(592, 754),
+                new Vector2(592, 800),
+                new Vector2(592, 846),
+                new Vector2(592, 892),
+                new Vector2(632, 869),
+                new Vector2(632, 823),
+                new Vector2(632, 777),
+                new Vector2(632, 731),
+                new Vector2(672, 846),
+                new Vector2(672, 800),
+                new Vector2(672, 754),
+                new Vector2(712, 823),
+                new Vector2(712, 777),
+                new Vector2(752, 800),
+                new Vector2(2560, 934),
+                new Vector2(2560, 666),
+                new Vector2(2560, 800),
+                new Vector2(1600, 800),
+                new Vector2(800, 800),
+                new Vector2(292, 800),
+                new Vector2(2700, 720)
+        };
+        // Initialize the ballers
+        balls[0] = new Ball(new Image("/redBall.png"), 23, positions[0], 1);
+        balls[1] = new Ball(new Image("/redBall.png"), 23, positions[1], 1);
+        balls[2] = new Ball(new Image("/redBall.png"), 23, positions[2], 1);
+        balls[3] = new Ball(new Image("/redBall.png"), 23, positions[3], 1);
+        balls[4] = new Ball(new Image("/redBall.png"), 23, positions[4], 1);
+        balls[5] = new Ball(new Image("/redBall.png"), 23, positions[5], 1);
+        balls[6] = new Ball(new Image("/redBall.png"), 23, positions[6], 1);
+        balls[7] = new Ball(new Image("/redBall.png"), 23, positions[7], 1);
+        balls[8] = new Ball(new Image("/redBall.png"), 23, positions[8], 1);
+        balls[9] = new Ball(new Image("/redBall.png"), 23, positions[9], 1);
+        balls[10] = new Ball(new Image("/redBall.png"), 23, positions[10], 1);
+        balls[11] = new Ball(new Image("/redBall.png"), 23, positions[11], 1);
+        balls[12] = new Ball(new Image("/redBall.png"), 23, positions[12], 1);
+        balls[13] = new Ball(new Image("/redBall.png"), 23, positions[13], 1);
+        balls[14] = new Ball(new Image("/redBall.png"), 23, positions[14], 1);
 
-        //initialize balls in BASE_WIDTH and BASE_HEIGHT space
-        balls[0] = new Ball(new Image("/redBall.png"), 23, new Vector2(592, 708), 1);
-        balls[1] = new Ball(new Image("/redBall.png"), 23, new Vector2(592, 754), 1);
-        balls[2] = new Ball(new Image("/redBall.png"), 23, new Vector2(592, 800), 1);
-        balls[3] = new Ball(new Image("/redBall.png"), 23, new Vector2(592, 846), 1);
-        balls[4] = new Ball(new Image("/redBall.png"), 23, new Vector2(592, 892), 1);
-        balls[5] = new Ball(new Image("/redBall.png"), 23, new Vector2(632, 869), 1);
-        balls[6] = new Ball(new Image("/redBall.png"), 23, new Vector2(632, 823), 1);
-        balls[7] = new Ball(new Image("/redBall.png"), 23, new Vector2(632, 777), 1);
-        balls[8] = new Ball(new Image("/redBall.png"), 23, new Vector2(632, 731), 1);
-        balls[9] = new Ball(new Image("/redBall.png"), 23, new Vector2(672, 846), 1);
-        balls[10] = new Ball(new Image("/redBall.png"), 23, new Vector2(672, 800), 1);
-        balls[11] = new Ball(new Image("/redBall.png"), 23, new Vector2(672, 754), 1);
-        balls[12] = new Ball(new Image("/redBall.png"), 23, new Vector2(712, 823), 1);
-        balls[13] = new Ball(new Image("/redBall.png"), 23, new Vector2(712, 777), 1);
-        balls[14] = new Ball(new Image("/redBall.png"), 23, new Vector2(752, 800), 1);
-
-        balls[15] = new Ball(new Image("/greenBall.png"), 23, new Vector2(2560, 934), 2);
-        balls[16] = new Ball(new Image("/yellowBall.png"), 23, new Vector2(2560, 666), 3);
-        balls[17] = new Ball(new Image("/brownBall.png"), 23, new Vector2(2560, 800), 4);
-        balls[18] = new Ball(new Image("/blueBall.png"), 23, new Vector2(1600, 800), 5);
-        balls[19] = new Ball(new Image("/pinkBall.png"), 23, new Vector2(800, 800), 6);
+        balls[15] = new Ball(new Image("/greenBall.png"), 23, positions[15], 2);
+        balls[16] = new Ball(new Image("/yellowBall.png"), 23, positions[16], 3);
+        balls[17] = new Ball(new Image("/brownBall.png"), 23, positions[17], 4);
+        balls[18] = new Ball(new Image("/blueBall.png"), 23, positions[18], 5);
+        balls[19] = new Ball(new Image("/pinkBall.png"), 23, positions[19], 6);
 
         if (Math.random() <= .01) {
-            balls[20] = new Ball(new Image("/ball2.png"), 23, new Vector2(292, 800), 7);
+            balls[20] = new Ball(new Image("/ball2.png"), 23, positions[20], 7);
         } else {
-            balls[20] = new Ball(new Image("/blackBall.png"), 23, new Vector2(292, 800), 7);
+            balls[20] = new Ball(new Image("/blackBall.png"), 23, positions[20], 7);
         }
 
-        balls[21] = new Ball(new Image("/cueBall.png"), 23, new Vector2(2700, 720), 0);
-
+        balls[21] = new Ball(new Image("/cueBall.png"), 23, positions[21], 0);
         for (Ball ball : balls) {
             if (ball == null) continue;
             if (ball.image != null) continue;
@@ -138,7 +160,7 @@ public class GameLogic {
     }
 
     public void update(double deltaTime) {
-        loadSubsteps();
+
 
         double friction = .45;
         double subDelta = deltaTime / subSteps;

@@ -13,6 +13,8 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 
+import java.io.InputStream;
+
 public class UIManager extends Application {
 
     private int width;
@@ -29,9 +31,9 @@ public class UIManager extends Application {
 
     private boolean paused = false;
 
+    private final ConfigReader config = new ConfigReader();
 
-    String filePath = new java.io.File("src/main/resources/config.properties").getAbsolutePath();
-    private final ConfigReader config = new ConfigReader(filePath);
+
 
     public static void main(String[] args) {
         launch(args);
@@ -40,8 +42,8 @@ public class UIManager extends Application {
     @Override
     public void start(Stage primaryStage) {
         this.primaryStage = primaryStage;
-
         loadWindowSize();
+
 
         primaryStage.setTitle("Snooker Game");
         primaryStage.setResizable(false);
