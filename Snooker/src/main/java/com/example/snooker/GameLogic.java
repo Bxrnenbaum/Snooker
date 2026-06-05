@@ -42,9 +42,6 @@ public class GameLogic {
 
     private boolean showDebugLines = true;
 
-    private Circle cueRing;
-    private boolean ringVisible;
-
     public GameLogic(int width, int height, Scene scene, Pane pane) {
         this.width = width;
         this.height = height;
@@ -191,24 +188,24 @@ public class GameLogic {
 
         for (int step = 0; step < subSteps; step++) {
             for (Ball ball : balls) {
-                if (ball == null || !ball.isActive) continue;
+                if (ball == null) continue;
                 ball.position = ball.position.sum(ball.velocity.scalar(subDelta));
-                if (!ball.isPotting) calculateWallCollisions(ball, cushions);
+                calculateWallCollisions(ball, cushions);
                 potBall(ball, holes);
             }
 
             handleCollisions();
 
             for (Ball ball : balls) {
-                if (ball == null || !ball.isActive) continue;
-                if (!ball.isPotting) ball.velocity = ball.velocity.scalar(frictionFactorPerSubStep);
+                if (ball == null) continue;
+                ball.velocity = ball.velocity.scalar(frictionFactorPerSubStep);
             }
         }
 
         boolean areAllBallsStanding = true;
         for (Ball ball : balls) {
-            if (ball == null || !ball.isActive) continue;
-            if (ball.velocity.magnitude() >= 5 || balls[21].velocity.magnitude() >= 1) {
+            if (ball == null) continue;
+            if (ball.velocity.magnitude() >= 1) {
                 areAllBallsStanding = false;
                 break;
             }
@@ -216,13 +213,10 @@ public class GameLogic {
 
         if (areAllBallsStanding) {
             shootCueBall();
-            showCueRing();
-        } else {
-            hideCueRing();
         }
 
         for (Ball ball : balls) {
-            if (ball == null || !ball.isActive) continue;
+            if (ball == null) continue;
 
             double displayX = toDisplayX(ball.position.x);
             double displayY = toDisplayY(ball.position.y);
@@ -280,10 +274,10 @@ public class GameLogic {
         final double minDistSq = minDist * minDist;
 
         for (int i = 0; i < balls.length; i++) {
-            if (balls[i] == null || !balls[i].isActive) continue;
+            if (balls[i] == null) continue;
 
             for (int j = i + 1; j < balls.length; j++) {
-                if (balls[j] == null || !balls[j].isActive) continue;
+                if (balls[j] == null) continue;
 
                 double dx = balls[i].position.x - balls[j].position.x;
                 double dy = balls[i].position.y - balls[j].position.y;
@@ -397,30 +391,13 @@ public class GameLogic {
 
     public void potBall(Ball ball, Vector2[] holes) {
         for (Vector2 hole : holes) {
-            double dist = ball.position.distance(hole);
-
-            if (dist <= holeRadius) {
-                ball.isPotting = true;
-
-                Vector2 direction = hole.difference(ball.position).normalize();
-                double pullStrength = 1.0 - (dist / holeRadius);
-                double suckSpeed = 150.0;
-
-                ball.velocity = direction.scalar(suckSpeed * pullStrength);
-                ball.fade(pullStrength * 0.3);
-
-                if (dist <= holeRadius * 0.1) {
-                    ball.velocity = Vector2.zero;
-                    ball.isActive = false;
-                    ball.isPotting = false;
-                }
-
-                return;
+            Vector2 dist = ball.position.difference(hole).abs();
+            if(dist.magnitude() <= holeRadius){
+                ball.fade(.3);
+                ball.velocity = Vector2.zero;
             }
-        }
 
-        ball.isPotting = false;
-        ball.isActive = true;
+        }
     }
 
     public Cushion[] instantiateCushions(float bw, float bh) {
@@ -542,27 +519,4 @@ public class GameLogic {
         };
     }
 
-
-    private void showCueRing() {
-        if (ringVisible) return;
-
-        double displayX = toDisplayX(balls[21].position.x);
-        double displayY = toDisplayY(balls[21].position.y);
-        double displayRadius = balls[21].radius * scaleX * 1.5;
-
-        cueRing = new Circle(displayX, displayY, displayRadius);
-        cueRing.setFill(Color.TRANSPARENT);
-        cueRing.setStroke(Color.WHITE);
-        cueRing.setStrokeWidth(5 * scaleX);
-        cueRing.setOpacity(1);
-
-        pane.getChildren().add(cueRing);
-        ringVisible = true;
-    }
-
-    private void hideCueRing() {
-        if (!ringVisible || cueRing == null) return;
-        pane.getChildren().remove(cueRing);
-        ringVisible = false;
-    }
 }
