@@ -20,7 +20,8 @@ public class Ball {
 
     private ColorAdjust colorAdjust = new ColorAdjust();
     private boolean isFading = false;
-
+    public boolean isActive = true;
+    public boolean isPotting = false;
 
     public Ball(Image image, double radius, Vector2 startingPosition, int type) {
         this.image = image;
