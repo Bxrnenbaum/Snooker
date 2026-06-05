@@ -1,31 +1,55 @@
 package com.example.snooker;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Properties;
 
 public class ConfigReader {
 
     private final Properties properties = new Properties();
-    private final String filePath;
+    private final Path configPath;
 
-    public ConfigReader(String filePath) {
-        this.filePath = filePath;
+    public ConfigReader() {
+        configPath = Paths.get(
+                System.getProperty("user.home"),
+                ".snooker",
+                "config.properties"
+        );
+
+        createIfMissing();
         load();
     }
 
+    private void createIfMissing() {
+        try {
+            Files.createDirectories(configPath.getParent());
+
+            if (!Files.exists(configPath)) {
+                properties.setProperty("width", "1600");
+                properties.setProperty("substeps", "8");
+                save();
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Could not create config file", e);
+        }
+    }
+
     public void load() {
-        try (FileInputStream input = new FileInputStream(filePath)) {
+        try (InputStream input = Files.newInputStream(configPath)) {
             properties.load(input);
-        } catch (Exception e) {
+        } catch (IOException e) {
             System.out.println("Could not load config file: " + e.getMessage());
         }
     }
 
     public void save() {
-        try (FileOutputStream output = new FileOutputStream(filePath)) {
+        try (OutputStream output = Files.newOutputStream(configPath)) {
             properties.store(output, "Snooker Config");
-        } catch (Exception e) {
+        } catch (IOException e) {
             System.out.println("Could not save config file: " + e.getMessage());
         }
     }
@@ -35,41 +59,29 @@ public class ConfigReader {
     }
 
     public int getInt(String key, int defaultValue) {
-        String value = properties.getProperty(key);
-
-        if (value == null) {
-            return defaultValue;
-        }
-
         try {
-            return Integer.parseInt(value);
+            return Integer.parseInt(
+                    properties.getProperty(key, String.valueOf(defaultValue))
+            );
         } catch (NumberFormatException e) {
             return defaultValue;
         }
     }
 
     public double getDouble(String key, double defaultValue) {
-        String value = properties.getProperty(key);
-
-        if (value == null) {
-            return defaultValue;
-        }
-
         try {
-            return Double.parseDouble(value);
+            return Double.parseDouble(
+                    properties.getProperty(key, String.valueOf(defaultValue))
+            );
         } catch (NumberFormatException e) {
             return defaultValue;
         }
     }
 
     public boolean getBoolean(String key, boolean defaultValue) {
-        String value = properties.getProperty(key);
-
-        if (value == null) {
-            return defaultValue;
-        }
-
-        return Boolean.parseBoolean(value);
+        return Boolean.parseBoolean(
+                properties.getProperty(key, String.valueOf(defaultValue))
+        );
     }
 
     public void setString(String key, String value) {
