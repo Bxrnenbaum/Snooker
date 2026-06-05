@@ -168,7 +168,7 @@ public class GameLogic {
             for (Ball ball : balls) {
                 if (ball == null || !ball.isActive) continue;
                 ball.position = ball.position.sum(ball.velocity.scalar(subDelta));
-                calculateWallCollisions(ball, cushions);
+                if (!ball.isPotting) calculateWallCollisions(ball, cushions);
                 potBall(ball, holes);
             }
 
@@ -176,7 +176,7 @@ public class GameLogic {
 
             for (Ball ball : balls) {
                 if (ball == null || !ball.isActive) continue;
-                ball.velocity = ball.velocity.scalar(frictionFactorPerSubStep);
+                if (!ball.isPotting) ball.velocity = ball.velocity.scalar(frictionFactorPerSubStep);
             }
         }
 
@@ -253,7 +253,7 @@ public class GameLogic {
         final double minDistSq = minDist * minDist;
 
         for (int i = 0; i < balls.length; i++) {
-            if (balls[i] == null  || !balls[i].isActive) continue;
+            if (balls[i] == null || !balls[i].isActive) continue;
 
             for (int j = i + 1; j < balls.length; j++) {
                 if (balls[j] == null || !balls[j].isActive) continue;
@@ -370,16 +370,30 @@ public class GameLogic {
 
     public void potBall(Ball ball, Vector2[] holes) {
         for (Vector2 hole : holes) {
-            Vector2 dist = ball.position.difference(hole).abs();
-            if(dist.magnitude() <= holeRadius){
-                ball.fade(.3);
-                ball.velocity = Vector2.zero;
-                ball.isActive = false;
+            double dist = ball.position.distance(hole);
+
+            if (dist <= holeRadius) {
+                ball.isPotting = true;
+
+                Vector2 direction = hole.difference(ball.position).normalize();
+                double pullStrength = 1.0 - (dist / holeRadius);
+                double suckSpeed = 150.0;
+
+                ball.velocity = direction.scalar(suckSpeed * pullStrength);
+                ball.fade(pullStrength * 0.3);
+
+                if (dist <= holeRadius * 0.1) {
+                    ball.velocity = Vector2.zero;
+                    ball.isActive = false;
+                    ball.isPotting = false;
+                }
+
                 return;
             }
-
-            ball.isActive = true;
         }
+
+        ball.isPotting = false;
+        ball.isActive = true;
     }
 
     public Cushion[] instantiateCushions(float bw, float bh) {
