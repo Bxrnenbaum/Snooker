@@ -42,6 +42,9 @@ public class GameLogic {
 
     private boolean showDebugLines = true;
 
+    private Circle cueRing;
+    private boolean ringVisible;
+
     public GameLogic(int width, int height, Scene scene, Pane pane) {
         this.width = width;
         this.height = height;
@@ -204,8 +207,8 @@ public class GameLogic {
 
         boolean areAllBallsStanding = true;
         for (Ball ball : balls) {
-            if (ball == null) continue;
-            if (ball.velocity.magnitude() >= 1) {
+            if (ball == null || !ball.isActive) continue;
+            if (ball.velocity.magnitude() >= 5 || balls[21].velocity.magnitude() >= 1) {
                 areAllBallsStanding = false;
                 break;
             }
@@ -213,6 +216,9 @@ public class GameLogic {
 
         if (areAllBallsStanding) {
             shootCueBall();
+            showCueRing();
+        } else {
+            hideCueRing();
         }
 
         for (Ball ball : balls) {
@@ -519,4 +525,27 @@ public class GameLogic {
         };
     }
 
+
+    private void showCueRing() {
+        if (ringVisible) return;
+
+        double displayX = toDisplayX(balls[21].position.x);
+        double displayY = toDisplayY(balls[21].position.y);
+        double displayRadius = balls[21].radius * scaleX * 1.5;
+
+        cueRing = new Circle(displayX, displayY, displayRadius);
+        cueRing.setFill(Color.TRANSPARENT);
+        cueRing.setStroke(Color.WHITE);
+        cueRing.setStrokeWidth(5 * scaleX);
+        cueRing.setOpacity(1);
+
+        pane.getChildren().add(cueRing);
+        ringVisible = true;
+    }
+
+    private void hideCueRing() {
+        if (!ringVisible || cueRing == null) return;
+        pane.getChildren().remove(cueRing);
+        ringVisible = false;
+    }
 }
