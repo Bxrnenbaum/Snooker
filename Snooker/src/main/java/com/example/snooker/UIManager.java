@@ -2,6 +2,7 @@ package com.example.snooker;
 
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -12,8 +13,9 @@ import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
+import javafx.scene.control.ScrollPane;
+import javafx.geometry.Insets;
 
-import java.io.InputStream;
 
 public class UIManager extends Application {
 
@@ -76,15 +78,21 @@ public class UIManager extends Application {
         Button startButton = new Button("Start Game");
         Button optionsButton = new Button("Options");
         Button quitButton = new Button("Quit");
+        Button tutorialButton = new Button("Tutorial");
+
+
 
         startButton.setOnAction(e -> startGame());
         optionsButton.setOnAction(e -> primaryStage.setScene(createOptionsScene()));
         quitButton.setOnAction(e -> primaryStage.close());
+        tutorialButton.setOnAction(e -> primaryStage.setScene(createTutorialScene()));
 
         root.getChildren().addAll(
+                tutorialButton,
                 startButton,
                 optionsButton,
                 quitButton
+
         );
 
         return new Scene(root, width, height);
@@ -257,6 +265,71 @@ public class UIManager extends Application {
         );
 
         gameRoot.getChildren().add(pauseMenu);
+    }
+    private Scene createTutorialScene() {
+
+        VBox content = new VBox(15);
+        content.setAlignment(Pos.TOP_CENTER);
+        content.setPadding(new Insets(20));
+
+        Label title = new Label("How to Play Snooker");
+        title.setStyle("-fx-font-size: 24px; -fx-font-weight: bold;");
+
+        Label tutorialText = new Label("""
+            CONTROLS
+
+            • Hold LEFT MOUSE BUTTON and drag.
+            • Release to strike the cue ball.
+            • ESC opens the pause menu.
+
+            OBJECTIVE
+
+            • Pot a red ball first.
+            • After a red, pot a coloured ball.
+            • Alternate between reds and colours.
+
+            BALL VALUES
+
+            Red = 1 point
+            Yellow = 2 points
+            Green = 3 points
+            Brown = 4 points
+            Blue = 5 points
+            Pink = 6 points
+            Black = 7 points
+
+            BASIC RULES
+
+            • Potting the wrong ball is a foul.
+            • If the cue ball enters a pocket, it is a foul.
+            • The player with the highest score wins.
+
+            GAMEPLAY TIPS
+
+            • Pull further back for more power.
+            • Use cushion bounces to reach difficult shots.
+            • Black and pink balls give the most points.
+            """);
+
+        tutorialText.setWrapText(true);
+
+        Button backButton = new Button("Back");
+        backButton.setOnAction(e ->
+                primaryStage.setScene(createStartScene())
+        );
+
+        content.getChildren().addAll(
+                title,
+                tutorialText,
+                backButton
+        );
+
+        ScrollPane scrollPane = new ScrollPane(content);
+
+        scrollPane.setFitToWidth(true);
+        scrollPane.setPannable(true);
+        Platform.runLater(content::requestFocus);
+        return new Scene(scrollPane, width, height);
     }
 
     private void togglePauseMenu() {

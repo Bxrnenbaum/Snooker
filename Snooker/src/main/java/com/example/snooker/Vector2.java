@@ -38,7 +38,6 @@ public class Vector2 {
     public Vector2 scalar(double scalar) { // returns this vector where each component has been multiplied by the scalar
         return new Vector2(scalar * this.x, scalar * this.y);
     }
-
     public double distance(Vector2 b) { //returns the distance between vector this and vector b
         return Math.sqrt((b.x - this.x) * (b.x - this.x) + (b.y - this.y) * (b.y - this.y));
     }
