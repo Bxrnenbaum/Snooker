@@ -45,6 +45,31 @@ public class GameLogic {
     private Circle cueRing;
     private boolean ringVisible;
 
+    Vector2[] positions = {
+            new Vector2(592, 708),
+            new Vector2(592, 754),
+            new Vector2(592, 800),
+            new Vector2(592, 846),
+            new Vector2(592, 892),
+            new Vector2(632, 869),
+            new Vector2(632, 823),
+            new Vector2(632, 777),
+            new Vector2(632, 731),
+            new Vector2(672, 846),
+            new Vector2(672, 800),
+            new Vector2(672, 754),
+            new Vector2(712, 823),
+            new Vector2(712, 777),
+            new Vector2(752, 800),
+            new Vector2(2560, 934),
+            new Vector2(2560, 666),
+            new Vector2(2560, 800),
+            new Vector2(1600, 800),
+            new Vector2(800, 800),
+            new Vector2(292, 800),
+            new Vector2(2700, 720)
+    };
+
     public GameLogic(int width, int height, Scene scene, Pane pane) {
         this.width = width;
         this.height = height;
@@ -79,60 +104,36 @@ public class GameLogic {
 
     public void onStart() {
         loadSubsteps();
-        Vector2[] positions = {
-                new Vector2(592, 708),
-                new Vector2(592, 754),
-                new Vector2(592, 800),
-                new Vector2(592, 846),
-                new Vector2(592, 892),
-                new Vector2(632, 869),
-                new Vector2(632, 823),
-                new Vector2(632, 777),
-                new Vector2(632, 731),
-                new Vector2(672, 846),
-                new Vector2(672, 800),
-                new Vector2(672, 754),
-                new Vector2(712, 823),
-                new Vector2(712, 777),
-                new Vector2(752, 800),
-                new Vector2(2560, 934),
-                new Vector2(2560, 666),
-                new Vector2(2560, 800),
-                new Vector2(1600, 800),
-                new Vector2(800, 800),
-                new Vector2(292, 800),
-                new Vector2(2700, 720)
-        };
         // Initialize the ballers
-        balls[0] = new Ball(new Image("/redBall.png"), 23, positions[0], 1);
-        balls[1] = new Ball(new Image("/redBall.png"), 23, positions[1], 1);
-        balls[2] = new Ball(new Image("/redBall.png"), 23, positions[2], 1);
-        balls[3] = new Ball(new Image("/redBall.png"), 23, positions[3], 1);
-        balls[4] = new Ball(new Image("/redBall.png"), 23, positions[4], 1);
-        balls[5] = new Ball(new Image("/redBall.png"), 23, positions[5], 1);
-        balls[6] = new Ball(new Image("/redBall.png"), 23, positions[6], 1);
-        balls[7] = new Ball(new Image("/redBall.png"), 23, positions[7], 1);
-        balls[8] = new Ball(new Image("/redBall.png"), 23, positions[8], 1);
-        balls[9] = new Ball(new Image("/redBall.png"), 23, positions[9], 1);
-        balls[10] = new Ball(new Image("/redBall.png"), 23, positions[10], 1);
-        balls[11] = new Ball(new Image("/redBall.png"), 23, positions[11], 1);
-        balls[12] = new Ball(new Image("/redBall.png"), 23, positions[12], 1);
-        balls[13] = new Ball(new Image("/redBall.png"), 23, positions[13], 1);
-        balls[14] = new Ball(new Image("/redBall.png"), 23, positions[14], 1);
+        balls[0] = new Ball(new Image("/redBall.png"), 23, positions[0], BallType.RED);
+        balls[1] = new Ball(new Image("/redBall.png"), 23, positions[1], BallType.RED);
+        balls[2] = new Ball(new Image("/redBall.png"), 23, positions[2], BallType.RED);
+        balls[3] = new Ball(new Image("/redBall.png"), 23, positions[3], BallType.RED);
+        balls[4] = new Ball(new Image("/redBall.png"), 23, positions[4], BallType.RED);
+        balls[5] = new Ball(new Image("/redBall.png"), 23, positions[5], BallType.RED);
+        balls[6] = new Ball(new Image("/redBall.png"), 23, positions[6], BallType.RED);
+        balls[7] = new Ball(new Image("/redBall.png"), 23, positions[7], BallType.RED);
+        balls[8] = new Ball(new Image("/redBall.png"), 23, positions[8], BallType.RED);
+        balls[9] = new Ball(new Image("/redBall.png"), 23, positions[9], BallType.RED);
+        balls[10] = new Ball(new Image("/redBall.png"), 23, positions[10], BallType.RED);
+        balls[11] = new Ball(new Image("/redBall.png"), 23, positions[11], BallType.RED);
+        balls[12] = new Ball(new Image("/redBall.png"), 23, positions[12], BallType.RED);
+        balls[13] = new Ball(new Image("/redBall.png"), 23, positions[13], BallType.RED);
+        balls[14] = new Ball(new Image("/redBall.png"), 23, positions[14], BallType.RED);
 
-        balls[15] = new Ball(new Image("/greenBall.png"), 23, positions[15], 2);
-        balls[16] = new Ball(new Image("/yellowBall.png"), 23, positions[16], 3);
-        balls[17] = new Ball(new Image("/brownBall.png"), 23, positions[17], 4);
-        balls[18] = new Ball(new Image("/blueBall.png"), 23, positions[18], 5);
-        balls[19] = new Ball(new Image("/pinkBall.png"), 23, positions[19], 6);
+        balls[15] = new Ball(new Image("/greenBall.png"), 23, positions[15], BallType.YELLOW);
+        balls[16] = new Ball(new Image("/yellowBall.png"), 23, positions[16], BallType.GREEN);
+        balls[17] = new Ball(new Image("/brownBall.png"), 23, positions[17], BallType.BROWN);
+        balls[18] = new Ball(new Image("/blueBall.png"), 23, positions[18], BallType.BLUE);
+        balls[19] = new Ball(new Image("/pinkBall.png"), 23, positions[19], BallType.PINK);
 
         if (Math.random() <= .01) {
-            balls[20] = new Ball(new Image("/ball2.png"), 23, positions[20], 7);
+            balls[20] = new Ball(new Image("/ball2.png"), 23, positions[20], BallType.BLACK);
         } else {
-            balls[20] = new Ball(new Image("/blackBall.png"), 23, positions[20], 7);
+            balls[20] = new Ball(new Image("/blackBall.png"), 23, positions[20], BallType.BLACK);
         }
 
-        balls[21] = new Ball(new Image("/cueBall.png"), 23, positions[21], 0);
+        balls[21] = new Ball(new Image("/cueBall.png"), 23, positions[21], BallType.WHITE);
         for (Ball ball : balls) {
             if (ball == null) continue;
             if (ball.image != null) continue;
@@ -239,6 +240,12 @@ public class GameLogic {
         }
 
         updateAimLine(areAllBallsStanding);
+
+        for(Ball ball : balls){
+            if(!ball.isActive && areAllBallsStanding){
+                replaceBall(ball);
+            }
+        }
     }
 
     private void loadSubsteps() {
@@ -397,13 +404,30 @@ public class GameLogic {
 
     public void potBall(Ball ball, Vector2[] holes) {
         for (Vector2 hole : holes) {
-            Vector2 dist = ball.position.difference(hole).abs();
-            if(dist.magnitude() <= holeRadius){
-                ball.fade(.3);
-                ball.velocity = Vector2.zero;
-            }
+            double dist = ball.position.distance(hole);
 
+            if (dist <= holeRadius) {
+                ball.isPotting = true;
+
+                Vector2 direction = hole.difference(ball.position).normalize();
+                double pullStrength = 1.0 - (dist / holeRadius);
+                double suckSpeed = 150.0;
+
+                ball.velocity = direction.scalar(suckSpeed * pullStrength);
+                ball.fade(2);
+
+                if (dist <= holeRadius * 0.1) {
+                    ball.velocity = Vector2.zero;
+                    ball.isActive = false;
+                    ball.isPotting = false;
+                }
+
+                return;
+            }
         }
+
+        ball.isPotting = false;
+        ball.isActive = true;
     }
 
     public Cushion[] instantiateCushions(float bw, float bh) {
@@ -547,5 +571,86 @@ public class GameLogic {
         if (!ringVisible || cueRing == null) return;
         pane.getChildren().remove(cueRing);
         ringVisible = false;
+    }
+
+    public void replaceBall(Ball ball){
+        if(ball.ballType == BallType.RED) return;
+        ball.position = findColoredBallRespawnPosition(ball, ball.ballType, ball.radius);
+        ball.unfade();
+    }
+
+    public Vector2 findColoredBallRespawnPosition(Ball ball, BallType type, double ballRadius) {
+        //try normal spot
+        if (isPositionFree(ball.nominalPosition, ballRadius)) {
+            return ball.nominalPosition;
+        }
+
+        //fallback spots: black, pink, blue, brown, green, yellow
+        BallType[] fallbackOrder = {BallType.BLACK, BallType.PINK, BallType.BLUE, BallType.BROWN, BallType.GREEN, BallType.YELLOW};
+        for (BallType spot : fallbackOrder) {
+            Vector2 candidate = getColorSpot(spot);
+            if (isPositionFree(candidate, ballRadius)) {
+                return candidate;
+            }
+        }
+
+        // when all fallbacks are occupied the ball has to go to the first
+        // empty position left of the nominal spot
+        // black and pink balls move to wards the center instead of the left, as they are closest to the left
+
+        // snooker rules are weird dont ask me
+        double railX = BASE_WIDTH * 0.04f;
+        double topCushionX = railX + ballRadius;
+        double baulkCushionX = BASE_WIDTH - railX - ballRadius;
+
+        // Step along the center line toward the top cushion
+        double step = ballRadius * 0.1f;
+        double x = ball.nominalPosition.x - step;
+
+        while (x >= topCushionX) {
+            Vector2 candidate = new Vector2(x, ball.nominalPosition.y);
+            if (isPositionFree(candidate, ballRadius)) {
+                return candidate;
+            }
+            x -= step;
+        }
+
+        //go to the right if theres no space on the left
+        x = ball.nominalPosition.x + step;
+        while (x <= baulkCushionX) {
+            Vector2 candidate = new Vector2(x, ball.nominalPosition.y);
+            if (isPositionFree(candidate, ballRadius)) {
+                return candidate;
+            }
+            x += step;
+        }
+
+        //should never be reached, absolute fallback if all positions are occupied
+        return ball.nominalPosition;
+    }
+
+    private boolean isPositionFree(Vector2 pos, double ballRadius) {
+        double minDist = ballRadius * 2;
+        for (Ball ball : balls) {
+            if (ball == null || !ball.isActive) continue;
+            double dx = ball.position.x - pos.x;
+            double dy = ball.position.y - pos.y;
+            if (dx * dx + dy * dy < minDist * minDist) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private Vector2 getColorSpot(BallType type) {
+        return switch (type) {
+            case BLACK  -> new Vector2(292,  800);
+            case PINK   -> new Vector2(800,  800);
+            case BLUE   -> new Vector2(1600, 800);
+            case BROWN  -> new Vector2(2560, 800);
+            case GREEN  -> new Vector2(2560, 666);
+            case YELLOW -> new Vector2(2560, 934);
+            default -> throw new IllegalArgumentException("Not a colour ball: " + type);
+        };
     }
 }
