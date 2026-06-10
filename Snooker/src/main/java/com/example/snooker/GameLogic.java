@@ -103,6 +103,8 @@ public class GameLogic {
 
 
     public void onStart() {
+
+        showDebugLines = config.getBoolean("showDebugLines", false);
         loadSubsteps();
         // Initialize the ballers
         balls[0] = new Ball(new Image("/redBall.png"), 23, positions[0], BallType.RED);

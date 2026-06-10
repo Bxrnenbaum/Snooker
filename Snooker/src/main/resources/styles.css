@@ -1,0 +1,156 @@
+.root {
+    -fx-background-color: #4a1a0e;
+    -fx-font-family: "Baskervville";
+    -fx-font-size: 24px;
+}
+
+.button {
+    -fx-background-color: #1e5c30;
+    -fx-text-fill: #f0ede8;
+    -fx-font-family: "Baskervville";
+    -fx-font-size: 24px;
+    -fx-padding: 10 32 10 32;
+    -fx-background-radius: 3;
+    -fx-border-color: #3a8a50;
+    -fx-border-width: 1;
+    -fx-border-radius: 3;
+    -fx-cursor: hand;
+}
+
+.button:hover {
+    -fx-background-color: #164a26;
+    -fx-border-color: #a0d0a8;
+    -fx-text-fill: #ffffff;
+}
+
+.button:pressed {
+    -fx-background-color: #0f3018;
+}
+
+.label {
+    -fx-text-fill: #f0ede8;
+    -fx-font-family: "Baskervville";
+    -fx-font-size: 24px;
+}
+
+.slider .track {
+    -fx-background-color: #1e5c30;
+    -fx-pref-height: 4;
+    -fx-background-radius: 2;
+    -fx-border-color: #3a8a50;
+    -fx-border-width: 1;
+    -fx-border-radius: 2;
+}
+
+.slider .thumb {
+    -fx-background-color: #f0ede8;
+    -fx-background-radius: 50%;
+    -fx-pref-width: 14;
+    -fx-pref-height: 14;
+    -fx-effect: null;
+}
+
+.slider .thumb:hover {
+    -fx-background-color: #ffffff;
+}
+
+.slider .axis {
+    -fx-tick-label-fill: #c8e8c8;
+    -fx-font-size: 13px;
+    -fx-font-family: "Baskervville";
+}
+
+.text-field {
+    -fx-background-color: #1e5c30;
+    -fx-text-fill: #f0ede8;
+    -fx-prompt-text-fill: #7ab890;
+    -fx-border-color: #3a8a50;
+    -fx-border-width: 1;
+    -fx-border-radius: 3;
+    -fx-background-radius: 3;
+    -fx-padding: 7 10 7 10;
+    -fx-font-family: "Baskervville";
+    -fx-font-size: 24px;
+}
+
+.text-field:focused {
+    -fx-border-color: #a0d0a8;
+    -fx-background-color: #164a26;
+}
+
+.check-box {
+    -fx-text-fill: #ddeedd;
+    -fx-font-family: "Baskervville";
+    -fx-font-size: 24px;
+}
+
+.check-box .box {
+    -fx-background-color: #1e5c30;
+    -fx-border-color: #3a8a50;
+    -fx-border-width: 1;
+    -fx-background-radius: 2;
+    -fx-border-radius: 2;
+}
+
+.check-box:selected .box {
+    -fx-background-color: #164a26;
+    -fx-border-color: #a0d0a8;
+}
+
+.check-box:selected .mark {
+    -fx-background-color: #f0ede8;
+}
+
+.scroll-pane {
+    -fx-background-color: #2e7a45;
+    -fx-background: #2e7a45;
+}
+
+.scroll-pane .viewport {
+    -fx-background-color: #2e7a45;
+}
+
+.scroll-pane .scroll-bar:vertical .track {
+    -fx-background-color: #1e5c30;
+}
+
+.scroll-pane .scroll-bar:vertical .thumb {
+    -fx-background-color: #3a8a50;
+    -fx-background-radius: 3;
+}
+
+.scroll-pane .scroll-bar:vertical .thumb:hover {
+    -fx-background-color: #a0d0a8;
+}
+
+.scroll-pane .corner {
+    -fx-background-color: #2e7a45;
+}
+
+#pauseMenu {
+    -fx-background-color: transparent;
+    -fx-padding: 50;
+    -fx-spacing: 12;
+}
+
+#tutorialTitle {
+    -fx-font-size: 26px;
+    -fx-font-family: "Baskervville";
+    -fx-text-fill: #f0ede8;
+}
+
+#optionsCard {
+    -fx-background-color: #2e7a45;
+    -fx-background-radius: 6;
+    -fx-border-color: #6b2a14;
+    -fx-border-width: 4;
+    -fx-border-radius: 6;
+    -fx-padding: 24;
+    -fx-max-width: 560;
+}
+
+#optionsTitle {
+    -fx-font-family: "Baskervville";
+    -fx-font-size: 22px;
+    -fx-text-fill: #f0ede8;
+}
