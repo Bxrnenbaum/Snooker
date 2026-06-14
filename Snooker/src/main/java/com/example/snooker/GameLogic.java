@@ -7,6 +7,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
+import javafx.scene.control.Label;
 
 public class GameLogic {
 
@@ -44,6 +45,11 @@ public class GameLogic {
 
     private Circle cueRing;
     private boolean ringVisible;
+    private int score = 0;
+    private boolean redRequired = true;
+
+    private Label scoreLabel;
+    private Label targetLabel;
 
     Vector2[] positions = {
             new Vector2(592, 708),
@@ -123,8 +129,8 @@ public class GameLogic {
         balls[13] = new Ball(new Image("/redBall.png"), 23, positions[13], BallType.RED);
         balls[14] = new Ball(new Image("/redBall.png"), 23, positions[14], BallType.RED);
 
-        balls[15] = new Ball(new Image("/greenBall.png"), 23, positions[15], BallType.YELLOW);
-        balls[16] = new Ball(new Image("/yellowBall.png"), 23, positions[16], BallType.GREEN);
+        balls[15] = new Ball(new Image("/greenBall.png"), 23, positions[15], BallType.GREEN);
+        balls[16] = new Ball(new Image("/yellowBall.png"), 23, positions[16], BallType.YELLOW);
         balls[17] = new Ball(new Image("/brownBall.png"), 23, positions[17], BallType.BROWN);
         balls[18] = new Ball(new Image("/blueBall.png"), 23, positions[18], BallType.BLUE);
         balls[19] = new Ball(new Image("/pinkBall.png"), 23, positions[19], BallType.PINK);
@@ -183,6 +189,29 @@ public class GameLogic {
         }
 
         System.out.println("Substeps loaded: " + subSteps);
+
+        scoreLabel = new Label("Score: 0");
+        targetLabel = new Label("Next: RED");
+
+        scoreLabel.setStyle(
+                "-fx-text-fill: white;" +
+                        "-fx-font-size: 28px;" +
+                        "-fx-font-weight: bold;"
+        );
+
+        targetLabel.setStyle(
+                "-fx-text-fill: white;" +
+                        "-fx-font-size: 28px;" +
+                        "-fx-font-weight: bold;"
+        );
+
+        scoreLabel.setLayoutX(20);
+        scoreLabel.setLayoutY(20);
+
+        targetLabel.setLayoutX(width - 250);
+        targetLabel.setLayoutY(20);
+
+        pane.getChildren().addAll(scoreLabel, targetLabel);
     }
 
     public void update(double deltaTime) {
@@ -419,6 +448,11 @@ public class GameLogic {
                 ball.fade(2);
 
                 if (dist <= holeRadius * 0.1) {
+
+                    if (ball.isActive) {
+                        onBallPotted(ball);
+                    }
+
                     ball.velocity = Vector2.zero;
                     ball.isActive = false;
                     ball.isPotting = false;
@@ -576,11 +610,38 @@ public class GameLogic {
     }
 
     public void replaceBall(Ball ball){
-        if(ball.ballType == BallType.RED) return;
-        ball.position = findColoredBallRespawnPosition(ball, ball.ballType, ball.radius);
+
+        if(ball.ballType == BallType.RED){
+            return;
+        }
+
+        if(ball.ballType == BallType.WHITE){
+
+            ball.setPosition(ball.nominalPosition);
+
+
+            ball.velocity = Vector2.zero;
+            ball.isActive = true;
+            ball.isPotting = false;
+
+            ball.unfade();
+            return;
+        }
+
+        ball.setPosition(
+                findColoredBallRespawnPosition(
+                        ball,
+                        ball.ballType,
+                        ball.radius
+                )
+        );
+
+        ball.velocity = Vector2.zero;
+        ball.isActive = true;
+        ball.isPotting = false;
+
         ball.unfade();
     }
-
     public Vector2 findColoredBallRespawnPosition(Ball ball, BallType type, double ballRadius) {
         //try normal spot
         if (isPositionFree(ball.nominalPosition, ballRadius)) {
@@ -654,5 +715,59 @@ public class GameLogic {
             case YELLOW -> new Vector2(2560, 934);
             default -> throw new IllegalArgumentException("Not a colour ball: " + type);
         };
+    }
+    private int getBallValue(BallType type) {
+        return switch (type) {
+            case RED -> 1;
+            case YELLOW -> 2;
+            case GREEN -> 3;
+            case BROWN -> 4;
+            case BLUE -> 5;
+            case PINK -> 6;
+            case BLACK -> 7;
+            default -> 0;
+        };
+    }
+    private void onBallPotted(Ball ball) {
+
+        if (ball.ballType == BallType.WHITE) {
+            targetLabel.setText("FOUL: WHITE");
+            return;
+        }
+
+        if (redRequired) {
+
+            if (ball.ballType == BallType.RED) {
+
+                score += 1;
+                redRequired = false;
+
+            } else {
+
+                targetLabel.setText("FOUL: RED REQUIRED");
+                return;
+            }
+
+        } else {
+
+            if (ball.ballType != BallType.RED) {
+
+                score += getBallValue(ball.ballType);
+                redRequired = true;
+
+            } else {
+
+                targetLabel.setText("FOUL: COLOUR REQUIRED");
+                return;
+            }
+        }
+
+        scoreLabel.setText("Score: " + score);
+
+        if (redRequired) {
+            targetLabel.setText("Next: RED");
+        } else {
+            targetLabel.setText("Next: COlOUR");
+        }
     }
 }
