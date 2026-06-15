@@ -51,6 +51,13 @@ public class GameLogic {
     private Label scoreLabel;
     private Label targetLabel;
 
+    private boolean foulMessageShown = false;
+
+
+    private BallType lastBallPottedThisTurn = null;
+    private boolean foulThisTurn = false;
+
+
     Vector2[] positions = {
             new Vector2(592, 708),
             new Vector2(592, 754),
@@ -191,7 +198,7 @@ public class GameLogic {
         System.out.println("Substeps loaded: " + subSteps);
 
         scoreLabel = new Label("Score: 0");
-        targetLabel = new Label("Next: RED");
+        targetLabel = new Label();
 
         scoreLabel.setStyle(
                 "-fx-text-fill: white;" +
@@ -208,10 +215,15 @@ public class GameLogic {
         scoreLabel.setLayoutX(20);
         scoreLabel.setLayoutY(20);
 
+        targetLabel.setLayoutX(width - 300);
         targetLabel.setLayoutY(20);
 
-        pane.getChildren().addAll(scoreLabel, targetLabel);
+        updateTargetLabel();
 
+        pane.getChildren().addAll(
+                scoreLabel,
+                targetLabel
+        );
         targetLabel.layoutXProperty().bind(
                 scene.widthProperty().subtract(targetLabel.widthProperty()).subtract(20)
         );
@@ -250,6 +262,13 @@ public class GameLogic {
                 areAllBallsStanding = false;
                 break;
             }
+        }
+        if (areAllBallsStanding && foulMessageShown) {
+
+            foulMessageShown = false;
+            foulThisTurn = false;
+
+            updateTargetLabel();
         }
 
         if (areAllBallsStanding) {
@@ -364,17 +383,38 @@ public class GameLogic {
     }
 
     public void shootCueBall() {
-        boolean isCurrentlyPressed = inputHandler.isPressedMouse(MouseButton.PRIMARY);
+
+        if(!balls[21].isActive){
+            return;
+        }
+
+        boolean isCurrentlyPressed =
+                inputHandler.isPressedMouse(MouseButton.PRIMARY);
 
         if (isCurrentlyPressed && !mouseWasPressed) {
-            startingPoint = toBase(inputHandler.getMousePosition());
+            startingPoint = toBase(
+                    inputHandler.getMousePosition()
+            );
         }
 
         if (!isCurrentlyPressed && mouseWasPressed) {
-            endPoint = toBase(inputHandler.getMousePosition());
+
+            endPoint = toBase(
+                    inputHandler.getMousePosition()
+            );
 
             if (startingPoint != null) {
-                balls[21].velocity = endPoint.difference(startingPoint).scalar(-7.5);
+
+                balls[21].velocity =
+                        endPoint.difference(startingPoint)
+                                .scalar(-7.5);
+
+                lastBallPottedThisTurn = null;
+
+                if (foulThisTurn) {
+                    foulThisTurn = false;
+                    updateTargetLabel();
+                }
             }
         }
 
@@ -455,7 +495,7 @@ public class GameLogic {
 
                 if (dist <= holeRadius * 0.1) {
 
-                    if (ball.isActive) {
+                    if(ball.isActive){
                         onBallPotted(ball);
                     }
 
@@ -615,22 +655,24 @@ public class GameLogic {
         ringVisible = false;
     }
 
-    public void replaceBall(Ball ball) {
+    public void replaceBall(Ball ball){
 
-        if (ball.ballType == BallType.RED) {
+        if(ball.ballType == BallType.RED){
             return;
         }
 
-        if (ball.ballType == BallType.WHITE) {
+        if(ball.ballType == BallType.WHITE){
+
+            ball.setImage(new Image("/cueBall.png"));
 
             ball.setPosition(ball.nominalPosition);
-
 
             ball.velocity = Vector2.zero;
             ball.isActive = true;
             ball.isPotting = false;
 
             ball.unfade();
+
             return;
         }
 
@@ -739,39 +781,54 @@ public class GameLogic {
 
     private void onBallPotted(Ball ball) {
 
+        if (foulThisTurn) {
+            return;
+        }
+
         if (ball.ballType == BallType.WHITE) {
+            foulThisTurn = true;
+            foulMessageShown = true;
             targetLabel.setText("FOUL: WHITE");
             return;
         }
 
-        if (redRequired) {
+        if (lastBallPottedThisTurn != null) {
 
-            if (ball.ballType == BallType.RED) {
+            boolean previousWasRed =
+                    lastBallPottedThisTurn == BallType.RED;
 
-                score += 1;
-                redRequired = false;
+            boolean currentIsRed =
+                    ball.ballType == BallType.RED;
 
-            } else {
+            if (previousWasRed == currentIsRed) {
 
-                targetLabel.setText("FOUL: RED REQUIRED");
-                return;
-            }
+                foulThisTurn = true;
 
-        } else {
+                if (currentIsRed) {
+                    targetLabel.setText("FOUL: 2 REDS");
+                } else {
+                    targetLabel.setText("FOUL: 2 COLOURS");
+                }
 
-            if (ball.ballType != BallType.RED) {
-
-                score += getBallValue(ball.ballType);
-                redRequired = true;
-
-            } else {
-
-                targetLabel.setText("FOUL: COLOUR REQUIRED");
                 return;
             }
         }
 
+        score += getBallValue(ball.ballType);
+
         scoreLabel.setText("Score: " + score);
+
+        lastBallPottedThisTurn = ball.ballType;
+
+        if (ball.ballType == BallType.RED) {
+            redRequired = false;
+        } else {
+            redRequired = true;
+        }
+
+        updateTargetLabel();
+    }
+    private void updateTargetLabel() {
 
         if (redRequired) {
             targetLabel.setText("Next: RED");
