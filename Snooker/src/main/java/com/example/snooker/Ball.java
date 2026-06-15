@@ -15,7 +15,7 @@ public class Ball {
     public Vector2 velocity;
     public Vector2 position;
     public double radius;
-    public final Vector2 nominalPosition;
+    public Vector2 nominalPosition;
 
     private ColorAdjust colorAdjust = new ColorAdjust();
     private boolean isFading = false;
@@ -53,7 +53,7 @@ public class Ball {
         timeline.play();
     }
 
-    public void unfade(){
+    public void unfade() {
         Timeline timeline = new Timeline(
                 new KeyFrame(Duration.ZERO,
                         new KeyValue(colorAdjust.brightnessProperty(), -1)

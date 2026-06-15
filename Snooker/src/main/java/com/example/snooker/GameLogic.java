@@ -45,18 +45,12 @@ public class GameLogic {
 
     private Circle cueRing;
     private boolean ringVisible;
-    private int score = 0;
-    private boolean redRequired = true;
+
+    private ScoreManager scoreManager;
+    private boolean finalTurnEvaluated = true;
 
     private Label scoreLabel;
     private Label targetLabel;
-
-    private boolean foulMessageShown = false;
-
-
-    private BallType lastBallPottedThisTurn = null;
-    private boolean foulThisTurn = false;
-
 
     Vector2[] positions = {
             new Vector2(592, 708),
@@ -218,8 +212,6 @@ public class GameLogic {
         targetLabel.setLayoutX(width - 300);
         targetLabel.setLayoutY(20);
 
-        updateTargetLabel();
-
         pane.getChildren().addAll(
                 scoreLabel,
                 targetLabel
@@ -227,6 +219,9 @@ public class GameLogic {
         targetLabel.layoutXProperty().bind(
                 scene.widthProperty().subtract(targetLabel.widthProperty()).subtract(20)
         );
+
+        scoreManager = new ScoreManager(balls);
+        targetLabel.setText("Target: RED");
     }
 
     public void update(double deltaTime) {
@@ -241,7 +236,7 @@ public class GameLogic {
 
         for (int step = 0; step < subSteps; step++) {
             for (Ball ball : balls) {
-                if (ball == null) continue;
+                if (ball == null || !ball.isActive) continue;
                 ball.position = ball.position.sum(ball.velocity.scalar(subDelta));
                 calculateWallCollisions(ball, cushions);
                 potBall(ball, holes);
@@ -263,19 +258,28 @@ public class GameLogic {
                 break;
             }
         }
-        if (areAllBallsStanding && foulMessageShown) {
-
-            foulMessageShown = false;
-            foulThisTurn = false;
-
-            updateTargetLabel();
-        }
 
         if (areAllBallsStanding) {
+            if (!finalTurnEvaluated) {
+                String gameFeedback = scoreManager.processTurnEnd();
+                System.out.println(gameFeedback);
+
+                scoreLabel.setText("Score: " + scoreManager.getScore());
+                targetLabel.setText("Target: " + (scoreManager.isRedRequired() ? "RED" : "ANY COLOR"));
+
+                finalTurnEvaluated = true;
+            }
+
             shootCueBall();
             showCueRing();
+
+            for (Ball ball : balls) {
+                if (ball != null && ball.ballType == BallType.RED) ball.nominalPosition = ball.position;
+            }
+
         } else {
             hideCueRing();
+            finalTurnEvaluated = false;
         }
 
         for (Ball ball : balls) {
@@ -296,12 +300,6 @@ public class GameLogic {
         }
 
         updateAimLine(areAllBallsStanding);
-
-        for (Ball ball : balls) {
-            if (!ball.isActive && areAllBallsStanding) {
-                replaceBall(ball);
-            }
-        }
     }
 
     private void loadSubsteps() {
@@ -343,7 +341,7 @@ public class GameLogic {
         final double minDistSq = minDist * minDist;
 
         for (int i = 0; i < balls.length; i++) {
-            if (balls[i] == null|| !balls[i].isActive) continue;
+            if (balls[i] == null || !balls[i].isActive) continue;
 
             for (int j = i + 1; j < balls.length; j++) {
                 if (balls[j] == null || !balls[j].isActive) continue;
@@ -366,6 +364,10 @@ public class GameLogic {
 
                 if (speedAlongNormal >= 0) continue;
 
+                if (scoreManager != null) {
+                    scoreManager.registerCollision(balls[i], balls[j]);
+                }
+
                 double jImpulse = -(1 + e) * speedAlongNormal / 2.0;
 
                 balls[i].velocity.x += jImpulse * nx;
@@ -384,7 +386,7 @@ public class GameLogic {
 
     public void shootCueBall() {
 
-        if(!balls[21].isActive){
+        if (!balls[21].isActive) {
             return;
         }
 
@@ -405,16 +407,13 @@ public class GameLogic {
 
             if (startingPoint != null) {
 
+                if (scoreManager != null) {
+                    scoreManager.lockPhaseForShot();
+                }
+
                 balls[21].velocity =
                         endPoint.difference(startingPoint)
                                 .scalar(-7.5);
-
-                lastBallPottedThisTurn = null;
-
-                if (foulThisTurn) {
-                    foulThisTurn = false;
-                    updateTargetLabel();
-                }
             }
         }
 
@@ -495,13 +494,13 @@ public class GameLogic {
 
                 if (dist <= holeRadius * 0.1) {
 
-                    if(ball.isActive){
-                        onBallPotted(ball);
-                    }
-
                     ball.velocity = Vector2.zero;
                     ball.isActive = false;
                     ball.isPotting = false;
+
+                    if (scoreManager != null) {
+                        scoreManager.registerPocket(ball);
+                    }
                 }
 
                 return;
@@ -653,187 +652,5 @@ public class GameLogic {
         if (!ringVisible || cueRing == null) return;
         pane.getChildren().remove(cueRing);
         ringVisible = false;
-    }
-
-    public void replaceBall(Ball ball){
-
-        if(ball.ballType == BallType.RED){
-            return;
-        }
-
-        if(ball.ballType == BallType.WHITE){
-
-            ball.setImage(new Image("/cueBall.png"));
-
-            ball.setPosition(ball.nominalPosition);
-
-            ball.velocity = Vector2.zero;
-            ball.isActive = true;
-            ball.isPotting = false;
-
-            ball.unfade();
-
-            return;
-        }
-
-        ball.setPosition(
-                findColoredBallRespawnPosition(
-                        ball,
-                        ball.ballType,
-                        ball.radius
-                )
-        );
-
-        ball.velocity = Vector2.zero;
-        ball.isActive = true;
-        ball.isPotting = false;
-
-        ball.unfade();
-    }
-
-    public Vector2 findColoredBallRespawnPosition(Ball ball, BallType type, double ballRadius) {
-        //try normal spot
-        if (isPositionFree(ball.nominalPosition, ballRadius)) {
-            return ball.nominalPosition;
-        }
-
-        //fallback spots: black, pink, blue, brown, green, yellow
-        BallType[] fallbackOrder = {BallType.BLACK, BallType.PINK, BallType.BLUE, BallType.BROWN, BallType.GREEN, BallType.YELLOW};
-        for (BallType spot : fallbackOrder) {
-            Vector2 candidate = getColorSpot(spot);
-            if (isPositionFree(candidate, ballRadius)) {
-                return candidate;
-            }
-        }
-
-        // when all fallbacks are occupied the ball has to go to the first
-        // empty position left of the nominal spot
-        // black and pink balls move to wards the center instead of the left, as they are closest to the left
-
-        // snooker rules are weird dont ask me
-        double railX = BASE_WIDTH * 0.04f;
-        double topCushionX = railX + ballRadius;
-        double baulkCushionX = BASE_WIDTH - railX - ballRadius;
-
-        // Step along the center line toward the top cushion
-        double step = ballRadius * 0.1f;
-        double x = ball.nominalPosition.x - step;
-
-        while (x >= topCushionX) {
-            Vector2 candidate = new Vector2(x, ball.nominalPosition.y);
-            if (isPositionFree(candidate, ballRadius)) {
-                return candidate;
-            }
-            x -= step;
-        }
-
-        //go to the right if theres no space on the left
-        x = ball.nominalPosition.x + step;
-        while (x <= baulkCushionX) {
-            Vector2 candidate = new Vector2(x, ball.nominalPosition.y);
-            if (isPositionFree(candidate, ballRadius)) {
-                return candidate;
-            }
-            x += step;
-        }
-
-        //should never be reached, absolute fallback if all positions are occupied
-        return ball.nominalPosition;
-    }
-
-    private boolean isPositionFree(Vector2 pos, double ballRadius) {
-        double minDist = ballRadius * 2;
-        for (Ball ball : balls) {
-            if (ball == null || !ball.isActive) continue;
-            double dx = ball.position.x - pos.x;
-            double dy = ball.position.y - pos.y;
-            if (dx * dx + dy * dy < minDist * minDist) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private Vector2 getColorSpot(BallType type) {
-        return switch (type) {
-            case BLACK -> new Vector2(292, 800);
-            case PINK -> new Vector2(800, 800);
-            case BLUE -> new Vector2(1600, 800);
-            case BROWN -> new Vector2(2560, 800);
-            case GREEN -> new Vector2(2560, 666);
-            case YELLOW -> new Vector2(2560, 934);
-            default -> throw new IllegalArgumentException("Not a colour ball: " + type);
-        };
-    }
-
-    private int getBallValue(BallType type) {
-        return switch (type) {
-            case RED -> 1;
-            case YELLOW -> 2;
-            case GREEN -> 3;
-            case BROWN -> 4;
-            case BLUE -> 5;
-            case PINK -> 6;
-            case BLACK -> 7;
-            default -> 0;
-        };
-    }
-
-    private void onBallPotted(Ball ball) {
-
-        if (foulThisTurn) {
-            return;
-        }
-
-        if (ball.ballType == BallType.WHITE) {
-            foulThisTurn = true;
-            foulMessageShown = true;
-            targetLabel.setText("FOUL: WHITE");
-            return;
-        }
-
-        if (lastBallPottedThisTurn != null) {
-
-            boolean previousWasRed =
-                    lastBallPottedThisTurn == BallType.RED;
-
-            boolean currentIsRed =
-                    ball.ballType == BallType.RED;
-
-            if (previousWasRed == currentIsRed) {
-
-                foulThisTurn = true;
-
-                if (currentIsRed) {
-                    targetLabel.setText("FOUL: 2 REDS");
-                } else {
-                    targetLabel.setText("FOUL: 2 COLOURS");
-                }
-
-                return;
-            }
-        }
-
-        score += getBallValue(ball.ballType);
-
-        scoreLabel.setText("Score: " + score);
-
-        lastBallPottedThisTurn = ball.ballType;
-
-        if (ball.ballType == BallType.RED) {
-            redRequired = false;
-        } else {
-            redRequired = true;
-        }
-
-        updateTargetLabel();
-    }
-    private void updateTargetLabel() {
-
-        if (redRequired) {
-            targetLabel.setText("Next: RED");
-        } else {
-            targetLabel.setText("Next: COLOUR");
-        }
     }
 }

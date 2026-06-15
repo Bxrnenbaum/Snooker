@@ -42,9 +42,9 @@ public class UIManager extends Application {
         );
 
         if (customFont != null) {
-            System.out.println("Loaded font family: " + customFont.getFamily());
+            System.out.println("Loaded font: " + customFont.getFamily());
         } else {
-            System.err.println("Font could not be loaded! Check the file path.");
+            System.err.println("Font couldnt be loaded");
         }
 
         this.primaryStage = primaryStage;
@@ -237,7 +237,10 @@ public class UIManager extends Application {
             @Override
             public void handle(long now) {
                 if (paused) return;
-                if (lastUpdate == 0) { lastUpdate = now; return; }
+                if (lastUpdate == 0) {
+                    lastUpdate = now;
+                    return;
+                }
                 double deltaTime = (now - lastUpdate) / 1_000_000_000.0;
                 lastUpdate = now;
                 gameLogic.update(deltaTime);
@@ -276,42 +279,7 @@ public class UIManager extends Application {
         Label title = new Label("How to Play Snooker");
         title.setId("tutorialTitle");
 
-        Label tutorialText = new Label("""
-            CONTROLS
-
-            \u2022 Hold LEFT MOUSE BUTTON and drag.
-            \u2022 Release to strike the cue ball.
-            \u2022 ESC opens the pause menu.
-
-            OBJECTIVE
-
-            \u2022 Pot a red ball first.
-            \u2022 After a red, pot a coloured ball.
-            \u2022 Alternate between reds and colours.
-
-            BALL VALUES
-
-            Red = 1 point
-            Yellow = 2 points
-            Green = 3 points
-            Brown = 4 points
-            Blue = 5 points
-            Pink = 6 points
-            Black = 7 points
-
-            BASIC RULES
-
-            \u2022 Potting the wrong ball is a foul.
-            \u2022 If the cue ball enters a pocket, it is a foul.
-            \u2022 The player with the highest score wins.
-
-            GAMEPLAY TIPS
-
-            \u2022 Pull further back for more power.
-            \u2022 Use cushion bounces to reach difficult shots.
-            \u2022 Black and pink balls give the most points.
-            """);
-        tutorialText.setWrapText(true);
+        Label tutorialText = getLabel();
 
         Button backButton = new Button("Back");
         backButton.setOnAction(e -> primaryStage.setScene(createStartScene()));
@@ -324,6 +292,45 @@ public class UIManager extends Application {
         Platform.runLater(content::requestFocus);
 
         return styledScene(scrollPane);
+    }
+
+    private static Label getLabel() {
+        Label tutorialText = new Label("""
+                CONTROLS
+                
+                • Hold LEFT MOUSE BUTTON and drag.
+                • Release to strike the cue ball.
+                • ESC opens the pause menu.
+                
+                OBJECTIVE
+                
+                • Pot a red ball first.
+                • After a red, pot a coloured ball.
+                • Alternate between reds and colours.
+                
+                BALL VALUES
+                
+                Red = 1 point
+                Yellow = 2 points
+                Green = 3 points
+                Brown = 4 points
+                Blue = 5 points
+                Pink = 6 points
+                Black = 7 points
+                
+                BASIC RULES
+                
+                • Potting the wrong ball is a foul.
+                • If the cue ball enters a pocket, it is a foul.
+                
+                GAMEPLAY TIPS
+                
+                • Pull further back for more power.
+                • Use cushion bounces to reach difficult shots.
+                • Black and pink balls give the most points.
+                """);
+        tutorialText.setWrapText(true);
+        return tutorialText;
     }
 
     private void togglePauseMenu() {
