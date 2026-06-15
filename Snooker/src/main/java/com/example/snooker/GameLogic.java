@@ -208,14 +208,20 @@ public class GameLogic {
         scoreLabel.setLayoutX(20);
         scoreLabel.setLayoutY(20);
 
-        targetLabel.setLayoutX(width - 250);
         targetLabel.setLayoutY(20);
 
         pane.getChildren().addAll(scoreLabel, targetLabel);
+
+        targetLabel.layoutXProperty().bind(
+                scene.widthProperty().subtract(targetLabel.widthProperty()).subtract(20)
+        );
     }
 
     public void update(double deltaTime) {
 
+
+        scoreLabel.toFront();
+        targetLabel.toFront();
 
         double friction = .45;
         double subDelta = deltaTime / subSteps;
@@ -254,7 +260,7 @@ public class GameLogic {
         }
 
         for (Ball ball : balls) {
-            if (ball == null) continue;
+            if (ball == null || !ball.isActive) continue;
 
             double displayX = toDisplayX(ball.position.x);
             double displayY = toDisplayY(ball.position.y);
@@ -272,8 +278,8 @@ public class GameLogic {
 
         updateAimLine(areAllBallsStanding);
 
-        for(Ball ball : balls){
-            if(!ball.isActive && areAllBallsStanding){
+        for (Ball ball : balls) {
+            if (!ball.isActive && areAllBallsStanding) {
                 replaceBall(ball);
             }
         }
@@ -318,10 +324,10 @@ public class GameLogic {
         final double minDistSq = minDist * minDist;
 
         for (int i = 0; i < balls.length; i++) {
-            if (balls[i] == null) continue;
+            if (balls[i] == null|| !balls[i].isActive) continue;
 
             for (int j = i + 1; j < balls.length; j++) {
-                if (balls[j] == null) continue;
+                if (balls[j] == null || !balls[j].isActive) continue;
 
                 double dx = balls[i].position.x - balls[j].position.x;
                 double dy = balls[i].position.y - balls[j].position.y;
@@ -442,7 +448,7 @@ public class GameLogic {
 
                 Vector2 direction = hole.difference(ball.position).normalize();
                 double pullStrength = 1.0 - (dist / holeRadius);
-                double suckSpeed = 150.0;
+                double suckSpeed = 300;
 
                 ball.velocity = direction.scalar(suckSpeed * pullStrength);
                 ball.fade(2);
@@ -609,13 +615,13 @@ public class GameLogic {
         ringVisible = false;
     }
 
-    public void replaceBall(Ball ball){
+    public void replaceBall(Ball ball) {
 
-        if(ball.ballType == BallType.RED){
+        if (ball.ballType == BallType.RED) {
             return;
         }
 
-        if(ball.ballType == BallType.WHITE){
+        if (ball.ballType == BallType.WHITE) {
 
             ball.setPosition(ball.nominalPosition);
 
@@ -642,6 +648,7 @@ public class GameLogic {
 
         ball.unfade();
     }
+
     public Vector2 findColoredBallRespawnPosition(Ball ball, BallType type, double ballRadius) {
         //try normal spot
         if (isPositionFree(ball.nominalPosition, ballRadius)) {
@@ -707,15 +714,16 @@ public class GameLogic {
 
     private Vector2 getColorSpot(BallType type) {
         return switch (type) {
-            case BLACK  -> new Vector2(292,  800);
-            case PINK   -> new Vector2(800,  800);
-            case BLUE   -> new Vector2(1600, 800);
-            case BROWN  -> new Vector2(2560, 800);
-            case GREEN  -> new Vector2(2560, 666);
+            case BLACK -> new Vector2(292, 800);
+            case PINK -> new Vector2(800, 800);
+            case BLUE -> new Vector2(1600, 800);
+            case BROWN -> new Vector2(2560, 800);
+            case GREEN -> new Vector2(2560, 666);
             case YELLOW -> new Vector2(2560, 934);
             default -> throw new IllegalArgumentException("Not a colour ball: " + type);
         };
     }
+
     private int getBallValue(BallType type) {
         return switch (type) {
             case RED -> 1;
@@ -728,6 +736,7 @@ public class GameLogic {
             default -> 0;
         };
     }
+
     private void onBallPotted(Ball ball) {
 
         if (ball.ballType == BallType.WHITE) {
@@ -767,7 +776,7 @@ public class GameLogic {
         if (redRequired) {
             targetLabel.setText("Next: RED");
         } else {
-            targetLabel.setText("Next: COlOUR");
+            targetLabel.setText("Next: COLOUR");
         }
     }
 }
