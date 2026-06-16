@@ -1,13 +1,10 @@
 name: Release
-
 on:
   push:
     tags:
       - 'v*'
-
 permissions:
   contents: write
-
 jobs:
   test:
     strategy:
@@ -19,36 +16,76 @@ jobs:
         working-directory: ./Snooker
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-java@v4
         with:
           java-version: '25'
           distribution: 'temurin'
           cache: maven
-
       - name: Build
         run: mvn clean package
 
-  release:
+  package:
     needs: test
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            type: deb
+            artifact: Snooker-linux-deb
+          - os: windows-latest
+            type: exe
+            artifact: Snooker-windows-exe
+          - os: macos-latest
+            type: dmg
+            artifact: Snooker-macos-dmg
+    runs-on: ${{ matrix.os }}
     defaults:
       run:
         working-directory: ./Snooker
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-java@v4
         with:
           java-version: '25'
           distribution: 'temurin'
           cache: maven
-
-      - name: Build
+      - name: Build jar
         run: mvn clean package
 
+      - name: Install WiX (Windows only)
+        if: matrix.os == 'windows-latest'
+        run: choco install wixtoolset -y
+        shell: bash
+
+      - name: Install dpkg tools (Linux only)
+        if: matrix.os == 'ubuntu-latest'
+        run: sudo apt-get update && sudo apt-get install -y fakeroot
+
+      - name: jpackage
+        run: |
+          jpackage \
+            --input target \
+            --name Snooker \
+            --main-jar Snooker.jar \
+            --type ${{ matrix.type }} \
+            --app-version 1.0.0 \
+            --dest dist
+        shell: bash
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: Snooker/dist/*
+
+  release:
+    needs: package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
-          files: Snooker/target/Snooker.jar
+          files: artifacts/**/*
           generate_release_notes: true
