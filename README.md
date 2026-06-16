@@ -2,7 +2,7 @@
 A school project about Snooker made using Java, specifically the JavaFX framework.
 
 ## Requirements
-- Java 17 or higher
+- Java 25 or higher
 - download from [Azul](https://www.azul.com/downloads/?package=jdk#zulu) if needed.
 
 ## How to run
