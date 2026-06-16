@@ -68,7 +68,6 @@ jobs:
             --name Snooker \
             --main-jar Snooker.jar \
             --type ${{ matrix.type }} \
-            --app-version 1.0.0 \
             --dest dist
         shell: bash
 
